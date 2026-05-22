@@ -1,0 +1,26 @@
+.content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+
+    .title {
+        margin-bottom: 16px;
+        color: black;
+        font-size: 32px;
+        font-weight: bold;
+    }
+
+
+    .form {
+        display: flex;
+        padding: 28px;
+        flex-direction: column;
+        background: #fff;
+
+        .input {
+            margin-bottom: 16px;
+            border-radius: 0px;
+        }
+    }
+}

@@ -17,6 +17,7 @@ export async function createClient() {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         )
+
                     } catch {
                         throw new Error(
                             'Failed to set cookies. This may be due to an issue with the cookie store or the cookies being set.')

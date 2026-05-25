@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
       },
     }
   )
-
+  console.log('Updating session...')
 
   const { data } = await supabase.auth.getClaims()
 

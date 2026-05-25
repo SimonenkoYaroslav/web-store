@@ -41,9 +41,6 @@
       "@static": [
         "./static"
       ],
-      "@core/*": [
-        "./src/core/*"
-      ],
       "@user/*": [
         "./src/core/*"
       ],
@@ -52,6 +49,9 @@
       ],
       "@auth/*": [
         "./src/core/*"
+      ],
+      "@utils/*": [
+        "./utils"
       ],
       "@cart/*": [
         "./src/core/*"

@@ -15,9 +15,7 @@ export const AuthProvider: FC<IProps> = async ({ children }) => {
     const accessToken = cookieStore.get(CookieKey.ACCESS_TOKEN)?.value;
 
     const headersMap = await headers();
-    const path = headersMap.get('x-path');
-    const currentUrl = !!path ? new URL(path) : null;
-    const currentPathname = (currentUrl)?.pathname ?? path;
+    const currentPathname = headersMap.get('x-pathname') ?? '/';
 
     if (!accessToken && currentPathname === '/login') {
         return children;

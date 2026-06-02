@@ -51,10 +51,13 @@
         "./src/core/*"
       ],
       "@utils/*": [
-        "./utils"
+        "./utils/*"
       ],
       "@cart/*": [
         "./src/core/*"
+      ],
+      "@constants/*": [
+        "./src/constants/*"
       ]
     },
     "typeRoots": [

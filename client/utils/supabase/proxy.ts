@@ -30,11 +30,14 @@ export async function updateSession(request: NextRequest) {
       },
     }
   )
-  console.log('Updating session...')
+  
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const { data } = await supabase.auth.getClaims()
-
-  const user = data?.claims
+  if (user && request.nextUrl.pathname.startsWith('/login')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/catalog'
+    return NextResponse.redirect(url)
+  }
 
   if (
     !user &&

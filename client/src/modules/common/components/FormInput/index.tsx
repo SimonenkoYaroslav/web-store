@@ -5,7 +5,7 @@ import { FC } from "react";
 import { Control, Controller } from "react-hook-form"
 
 interface IFormInput {
-    control: Control<any>;
+    control: Control;
     type?: 'password' | 'text';
     name: string;
     label: string;

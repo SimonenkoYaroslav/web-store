@@ -1,27 +1,24 @@
 import { ISignIn } from "../types/auth.types";
 
-import Cookies from "universal-cookie";
-import { createClient } from "../../../../utils/supabase/client";
-
-import { CookieKey } from "@modules/common/enums/CookieyKey";
-
-const cookies = new Cookies();
+import { createClient } from "@utils/supabase/client";
 
 class AuthService {
     async signInUser({ email, password }: ISignIn) {
-        const supabase = await createClient();
+        const supabase = createClient();
 
-        const { data, error } = await supabase.auth.signInWithPassword({ password, email })
-
-        cookies.set(CookieKey.ACCESS_TOKEN, data.session?.access_token)
+        const { data, error } = await supabase.auth.signInWithPassword({ password, email });
 
         if (error) {
             throw new Error(error.message);
         }
 
-        console.log(data);
-
         return data;
+    }
+
+    async signOut() {
+        const supabase = createClient();
+
+        await supabase.auth.signOut();
     }
 }
 

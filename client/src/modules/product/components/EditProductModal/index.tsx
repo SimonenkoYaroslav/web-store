@@ -34,15 +34,14 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
     const router = useRouter();
     const [blobPreview, setBlobPreview] = useState<string | null>(null);
     const [hasNewImage, setHasNewImage] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const {
         register,
         handleSubmit,
         control,
         reset,
-        formState: { errors },
+        setError,
+        formState: { errors, isSubmitting },
     } = useForm({
         resolver: yupResolver(editProductSchema),
         mode: 'onChange',
@@ -64,7 +63,6 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
         if (blobPreview) URL.revokeObjectURL(blobPreview);
         setBlobPreview(null);
         setHasNewImage(false);
-        setSubmitError(null);
         reset();
         onClose();
     };
@@ -87,8 +85,6 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
     const previewSrc = blobPreview ?? product.image_url;
 
     const onSubmit = handleSubmit(async (data) => {
-        setSubmitting(true);
-        setSubmitError(null);
         try {
             let imageUrl: string | undefined;
 
@@ -109,8 +105,7 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
             handleClose();
             router.refresh();
         } catch (err) {
-            setSubmitError(err instanceof Error ? err.message : 'Something went wrong');
-            setSubmitting(false);
+            setError('root', { message: err instanceof Error ? err.message : 'Something went wrong' });
         }
     });
 
@@ -196,22 +191,22 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                         </div>
                     </div>
 
-                    {submitError && (
-                        <p className="text-red-500 text-sm">{submitError}</p>
+                    {errors.root && (
+                        <p className="text-red-500 text-sm">{errors.root.message}</p>
                     )}
                 </DialogContent>
 
                 <DialogActions className="px-6 pb-4">
-                    <Button onClick={handleClose} disabled={submitting}>
+                    <Button onClick={handleClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={submitting}
-                        startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
+                        disabled={isSubmitting}
+                        startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
                     >
-                        {submitting ? 'Saving...' : 'Save Changes'}
+                        {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </DialogActions>
             </form>

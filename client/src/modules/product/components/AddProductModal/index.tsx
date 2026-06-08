@@ -31,15 +31,14 @@ interface IProps {
 export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
     const router = useRouter();
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [submitting, setSubmitting] = useState(false);
-    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const {
         register,
         handleSubmit,
         control,
         reset,
-        formState: { errors },
+        setError,
+        formState: { errors, isSubmitting },
     } = useForm({ resolver: yupResolver(createProductSchema), mode: 'onChange' });
 
     useEffect(() => {
@@ -51,7 +50,6 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
     const handleClose = () => {
         if (imagePreview) URL.revokeObjectURL(imagePreview);
         setImagePreview(null);
-        setSubmitError(null);
         reset();
         onClose();
     };
@@ -66,8 +64,6 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
     };
 
     const onSubmit = handleSubmit(async (data) => {
-        setSubmitting(true);
-        setSubmitError(null);
         try {
             const productId = crypto.randomUUID();
             const file = (data.image as FileList)[0];
@@ -84,8 +80,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
             handleClose();
             router.refresh();
         } catch (err) {
-            setSubmitError(err instanceof Error ? err.message : 'Something went wrong');
-            setSubmitting(false);
+            setError('root', { message: err instanceof Error ? err.message : 'Something went wrong' });
         }
     });
 
@@ -173,22 +168,22 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                         )}
                     </div>
 
-                    {submitError && (
-                        <p className="text-red-500 text-sm">{submitError}</p>
+                    {errors.root && (
+                        <p className="text-red-500 text-sm">{errors.root.message}</p>
                     )}
                 </DialogContent>
 
                 <DialogActions className="px-6 pb-4">
-                    <Button onClick={handleClose} disabled={submitting}>
+                    <Button onClick={handleClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={submitting}
-                        startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
+                        disabled={isSubmitting}
+                        startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
                     >
-                        {submitting ? 'Adding...' : 'Add Product'}
+                        {isSubmitting ? 'Adding...' : 'Add Product'}
                     </Button>
                 </DialogActions>
             </form>

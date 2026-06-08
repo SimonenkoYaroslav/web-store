@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useState } from 'react';
+import { FC, useTransition, useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -21,21 +21,19 @@ interface IProps {
 
 export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, onClose }) => {
     const router = useRouter();
-    const [deleting, setDeleting] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
 
-    const handleDelete = async () => {
-        setDeleting(true);
-        setError(null);
-        try {
-            await productClientService.deleteProduct(productId);
-            onClose();
-            router.refresh();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Something went wrong');
-        } finally {
-            setDeleting(false);
-        }
+    const handleDelete = () => {
+        startTransition(async () => {
+            try {
+                await productClientService.deleteProduct(productId);
+                onClose();
+                router.refresh();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Something went wrong');
+            }
+        });
     };
 
     const handleClose = () => {
@@ -55,17 +53,17 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, o
                 {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
             </DialogContent>
             <DialogActions className="px-6 pb-4">
-                <Button onClick={handleClose} disabled={deleting}>
+                <Button onClick={handleClose} disabled={isPending}>
                     Cancel
                 </Button>
                 <Button
                     variant="contained"
                     color="error"
-                    disabled={deleting}
+                    disabled={isPending}
                     onClick={handleDelete}
-                    startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : null}
+                    startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : null}
                 >
-                    {deleting ? 'Deleting...' : 'Delete'}
+                    {isPending ? 'Deleting...' : 'Delete'}
                 </Button>
             </DialogActions>
         </Dialog>

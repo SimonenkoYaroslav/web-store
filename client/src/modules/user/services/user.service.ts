@@ -5,14 +5,12 @@ class UserService {
     async fetchCurrentUser() {
         const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-
         if (authError || !user) {
             return null;
         }
 
         const { data, error } = await supabase.from('users')
             .select('*')
-            .eq('email', user.email)
             .single();
 
         if (error) {
@@ -24,4 +22,5 @@ class UserService {
 }
 
 
-export default new UserService;
+const userService = new UserService;
+export default userService;

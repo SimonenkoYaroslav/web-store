@@ -1,4 +1,4 @@
-export { ProductsTable, AddProductModal, AddProductButton } from './components';
+export { ProductsTable, AddProductModal, AddProductButton, EditProductModal } from './components';
 export { productService } from './services';
-export type { IProduct, ICreateProduct } from './types';
+export type { IProduct, ICreateProduct, IUpdateProduct } from './types';
 export { ProductType } from './enums/ProductType';

@@ -19,18 +19,21 @@ import {
 } from '@mui/material';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { IProduct } from '@modules/product/types';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { productClientService } from '@modules/product/services/client';
-import { createProductSchema } from './schemas/createProduct.schema';
+import { editProductSchema } from './schemas/editProduct.schema';
 
 interface IProps {
     open: boolean;
+    product: IProduct;
     onClose: () => void;
 }
 
-export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
+export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
     const router = useRouter();
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [blobPreview, setBlobPreview] = useState<string | null>(null);
+    const [hasNewImage, setHasNewImage] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -40,17 +43,27 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
         control,
         reset,
         formState: { errors },
-    } = useForm({ resolver: yupResolver(createProductSchema), mode: 'onChange' });
+    } = useForm({
+        resolver: yupResolver(editProductSchema),
+        mode: 'onChange',
+        defaultValues: {
+            name: product.name,
+            type: product.type,
+            amount: product.amount,
+            currency: product.currency,
+        },
+    });
 
     useEffect(() => {
         return () => {
-            if (imagePreview) URL.revokeObjectURL(imagePreview);
+            if (blobPreview) URL.revokeObjectURL(blobPreview);
         };
-    }, [imagePreview]);
+    }, [blobPreview]);
 
     const handleClose = () => {
-        if (imagePreview) URL.revokeObjectURL(imagePreview);
-        setImagePreview(null);
+        if (blobPreview) URL.revokeObjectURL(blobPreview);
+        setBlobPreview(null);
+        setHasNewImage(false);
         setSubmitError(null);
         reset();
         onClose();
@@ -60,26 +73,38 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (imagePreview) URL.revokeObjectURL(imagePreview);
-        setImagePreview(files && files.length > 0 ? URL.createObjectURL(files[0]) : null);
+        if (blobPreview) URL.revokeObjectURL(blobPreview);
+        if (files && files.length > 0) {
+            setBlobPreview(URL.createObjectURL(files[0]));
+            setHasNewImage(true);
+        } else {
+            setBlobPreview(null);
+            setHasNewImage(false);
+        }
         imageRegisterOnChange(e);
     };
+
+    const previewSrc = blobPreview ?? product.image_url;
 
     const onSubmit = handleSubmit(async (data) => {
         setSubmitting(true);
         setSubmitError(null);
         try {
-            const productId = crypto.randomUUID();
-            const file = (data.image as FileList)[0];
-            const { publicUrl } = await productClientService.uploadProductImage(productId, file);
+            let imageUrl: string | undefined;
 
-            await productClientService.createProduct({
-                id: productId,
+            if (hasNewImage) {
+                const file = (data.image as FileList)[0];
+                const { path, publicUrl } = await productClientService.uploadProductImage(product.id, file);
+                await productClientService.deleteProductImagesExcept(product.id, path);
+                imageUrl = publicUrl;
+            }
+
+            await productClientService.updateProduct(product.id, {
                 name: data.name as string,
                 type: data.type as ProductType,
                 amount: data.amount as number,
                 currency: data.currency as string,
-                imageUrl: publicUrl,
+                imageUrl,
             });
             handleClose();
             router.refresh();
@@ -91,7 +116,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
 
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-            <DialogTitle>Add Product</DialogTitle>
+            <DialogTitle>Edit Product</DialogTitle>
             <form onSubmit={onSubmit}>
                 <DialogContent className="flex flex-col gap-4">
                     <TextField
@@ -147,7 +172,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                             fullWidth
                             color={errors.image ? 'error' : 'primary'}
                         >
-                            {imagePreview ? 'Change Image' : 'Upload Image'}
+                            {hasNewImage ? 'Change Image' : 'Replace Image'}
                             <input
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
@@ -159,18 +184,16 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                         {errors.image && (
                             <p className="text-red-500 text-xs mt-1 ml-1">{errors.image.message}</p>
                         )}
-                        {imagePreview && (
-                            <div className={`mt-2 rounded border overflow-hidden ${errors.image ? 'border-red-300' : 'border-gray-200'}`}>
-                                <Image
-                                    src={imagePreview}
-                                    alt="Preview"
-                                    width={500}
-                                    height={160}
-                                    unoptimized
-                                    className="w-full h-40 object-contain bg-gray-50"
-                                />
-                            </div>
-                        )}
+                        <div className={`mt-2 rounded border overflow-hidden ${errors.image ? 'border-red-300' : 'border-gray-200'}`}>
+                            <Image
+                                src={previewSrc}
+                                alt="Product preview"
+                                width={500}
+                                height={160}
+                                unoptimized={!!blobPreview}
+                                className="w-full h-40 object-contain bg-gray-50"
+                            />
+                        </div>
                     </div>
 
                     {submitError && (
@@ -188,7 +211,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                         disabled={submitting}
                         startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
                     >
-                        {submitting ? 'Adding...' : 'Add Product'}
+                        {submitting ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </DialogActions>
             </form>

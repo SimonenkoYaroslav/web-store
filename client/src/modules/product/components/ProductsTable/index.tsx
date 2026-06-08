@@ -13,16 +13,19 @@ import {
     IconButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import Image from 'next/image';
 import { IProduct } from '@modules/product/types';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { DeleteProductModal } from '../DeleteProductModal';
+import { EditProductModal } from '../EditProductModal';
 
 interface IProps {
     products: IProduct[];
 }
 
 export const ProductsTable: FC<IProps> = ({ products }) => {
+    const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
     const [deletingProduct, setDeletingProduct] = useState<IProduct | null>(null);
 
     if (products.length === 0) {
@@ -72,6 +75,13 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
                                 <TableCell align="right">
                                     <IconButton
                                         size="small"
+                                        aria-label="edit product"
+                                        onClick={() => setEditingProduct(product)}
+                                    >
+                                        <EditIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                        size="small"
                                         color="error"
                                         aria-label="delete product"
                                         onClick={() => setDeletingProduct(product)}
@@ -84,6 +94,15 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {editingProduct && (
+                <EditProductModal
+                    key={editingProduct.id}
+                    open
+                    product={editingProduct}
+                    onClose={() => setEditingProduct(null)}
+                />
+            )}
 
             {deletingProduct && (
                 <DeleteProductModal

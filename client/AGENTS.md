@@ -15,7 +15,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Framework | Next.js 16.2.6 (App Router) |
 | Language | TypeScript 5, strict mode |
 | Runtime | React 19 |
-| Styling | Tailwind CSS v4 + SCSS Modules + Material UI v9 |
+| Styling | Tailwind CSS v4 + Material UI v9 |
 | Auth & DB | Supabase (`@supabase/ssr` 0.10, `@supabase/supabase-js` 2) |
 | Forms | `react-hook-form` v7 + `yup` v1 + `@hookform/resolvers` |
 | HTTP | `axios` (not yet used for Supabase calls — those go through the Supabase SDK) |
@@ -202,9 +202,7 @@ Example: `import { authService } from '@modules/auth/services'`
 
 ### Styling
 
-Use **SCSS Modules** for component-scoped styles: create `styles.module.scss` alongside the component, import as `import styles from './styles.module.scss'`, apply as `className={styles.myClass}`.
-
-Use **Tailwind CSS** for layout and utility classes directly in JSX (e.g., `className="flex flex-col min-h-full"`).
+Use **Tailwind CSS** for all component styles — apply utility classes directly in JSX (e.g., `className="flex flex-col min-h-full"`). Do not create `styles.module.scss` files.
 
 Use **Material UI** components for interactive form elements (TextField, Button, Box). Do not mix MUI layout components with Tailwind — pick one system per concern.
 

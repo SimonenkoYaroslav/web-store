@@ -87,7 +87,10 @@
             ["@modules", "./src/modules"],
             ["@common", "./src/modules/common"],
             ["@static", "./static"],
-            ["@env", "./src/env"]
+            ["@utils", "./utils"],
+            ["@user", "./src/modules/user"],
+            ["@catalog", "./src/modules/catalog"],
+            ["@auth", "./src/modules/auth"]
           ],
           "extensions": [".tsx", ".ts", ".js", ".jsx"]
         }

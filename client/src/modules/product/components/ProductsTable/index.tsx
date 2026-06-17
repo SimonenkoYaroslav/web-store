@@ -1,23 +1,15 @@
 'use client'
 
-import { FC, useState } from 'react';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    IconButton,
-} from '@mui/material';
+import { Chip, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import Image from 'next/image';
-import { IProduct } from '@modules/product/types';
+import { DataTable, IColumn } from '@common/components';
 import { ProductType } from '@modules/product/enums/ProductType';
+import { IProduct } from '@modules/product/types';
 import { formatDate } from '@modules/product/utils/formatDate';
+import Image from 'next/image';
+import { FC, useState } from 'react';
+
 import { DeleteProductModal } from '../DeleteProductModal';
 import { EditProductModal } from '../EditProductModal';
 
@@ -29,72 +21,80 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
     const [deletingProduct, setDeletingProduct] = useState<IProduct | null>(null);
 
-    if (products.length === 0) {
-        return <p className="text-center text-gray-500 py-8">No products found.</p>;
-    }
+    const columns: IColumn<IProduct>[] = [
+        {
+            key: 'image',
+            header: 'Image',
+            cell: (product) => (
+                <Image
+                    src={product.image_url}
+                    alt={product.name}
+                    width={48}
+                    height={48}
+                    className="object-cover rounded"
+                />
+            ),
+        },
+        {
+            key: 'name',
+            header: 'Name',
+            cell: (product) => product.name,
+        },
+        {
+            key: 'type',
+            header: 'Type',
+            cell: (product) => (
+                <Chip
+                    label={product.type}
+                    color={product.type === ProductType.Subscription ? 'primary' : 'default'}
+                    size="small"
+                />
+            ),
+        },
+        {
+            key: 'price',
+            header: 'Price',
+            cell: (product) => `${product.amount} ${product.currency}`,
+        },
+        {
+            key: 'created_at',
+            header: 'Created At',
+            cell: (product) => formatDate(product.created_at),
+        },
+        {
+            key: 'actions',
+            header: '',
+            align: 'right',
+            cell: (product) => (
+                <>
+                    <IconButton
+                        size="small"
+                        aria-label="edit product"
+                        onClick={() => setEditingProduct(product)}
+                    >
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                        size="small"
+                        color="error"
+                        aria-label="delete product"
+                        onClick={() => setDeletingProduct(product)}
+                    >
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
+                </>
+            ),
+        },
+    ];
 
     return (
         <>
-            <TableContainer component={Paper} className="rounded-lg overflow-hidden shadow">
-                <Table>
-                    <TableHead className="bg-gray-100">
-                        <TableRow>
-                            <TableCell className="font-semibold text-gray-800">Image</TableCell>
-                            <TableCell className="font-semibold text-gray-800">Name</TableCell>
-                            <TableCell className="font-semibold text-gray-800">Type</TableCell>
-                            <TableCell className="font-semibold text-gray-800">Price</TableCell>
-                            <TableCell className="font-semibold text-gray-800">Created At</TableCell>
-                            <TableCell />
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {products.map((product) => (
-                            <TableRow key={product.id} className="hover:bg-gray-50">
-                                <TableCell>
-                                    <Image
-                                        src={product.image_url}
-                                        alt={product.name}
-                                        width={48}
-                                        height={48}
-                                        className="object-cover rounded"
-                                    />
-                                </TableCell>
-                                <TableCell>{product.name}</TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={product.type}
-                                        color={product.type === ProductType.Subscription ? 'primary' : 'default'}
-                                        size="small"
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    {product.amount} {product.currency}
-                                </TableCell>
-                                <TableCell>
-                                    {formatDate(product.created_at)}
-                                </TableCell>
-                                <TableCell align="right">
-                                    <IconButton
-                                        size="small"
-                                        aria-label="edit product"
-                                        onClick={() => setEditingProduct(product)}
-                                    >
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton
-                                        size="small"
-                                        color="error"
-                                        aria-label="delete product"
-                                        onClick={() => setDeletingProduct(product)}
-                                    >
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            <DataTable
+                columns={columns}
+                rows={products}
+                getRowKey={(product) => product.id}
+                emptyMessage="No products found."
+            />
 
             {editingProduct && (
                 <EditProductModal

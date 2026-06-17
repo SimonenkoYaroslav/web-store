@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useState } from 'react';
-import { Button } from '@mui/material';
+import { Button } from '@common/components';
 import { AddProductModal } from '../AddProductModal';
 
 export const AddProductButton: FC = () => {

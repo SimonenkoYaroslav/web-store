@@ -8,17 +8,16 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Button,
     TextField,
     Select,
     MenuItem,
     FormControl,
     InputLabel,
     FormHelperText,
-    CircularProgress,
 } from '@mui/material';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Button } from '@common/components';
 import { IProduct } from '@modules/product/types';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { productClientService } from '@modules/product/services/client';
@@ -200,12 +199,7 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                     <Button onClick={handleClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={isSubmitting}
-                        startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
-                    >
+                    <Button type="submit" variant="contained" loading={isSubmitting}>
                         {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </DialogActions>

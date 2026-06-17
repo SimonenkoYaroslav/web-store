@@ -1,3 +1,5 @@
-export default function Loading() {
-    return <div>Loading...</div>
+import { Loading } from '@common/components';
+
+export default function GlobalLoading() {
+    return <Loading fullScreen />;
 }

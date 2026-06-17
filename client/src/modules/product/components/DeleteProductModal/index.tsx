@@ -8,7 +8,7 @@ import {
     DialogActions,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { Button } from '@common/components';
+import { Button } from '@components';
 import { productClientService } from '@modules/product/services/client';
 
 interface IProps {

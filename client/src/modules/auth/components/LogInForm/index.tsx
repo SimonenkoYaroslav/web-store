@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { signInSchema } from "./schemas/signIn.schema";
 import { FC } from "react";
-import { Button } from "@common/components";
+import { Button } from "@components";
 import { authService } from "@modules/auth/services";
 import { useRouter } from 'next/navigation'
 import { UserRole } from "@modules/user/enums/UserRole";

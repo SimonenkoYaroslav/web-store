@@ -3,7 +3,7 @@
 import { Chip, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { DataTable, IColumn } from '@common/components';
+import { DataTable, IColumn } from '@components';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { IProduct } from '@modules/product/types';
 import { formatDate } from '@modules/product/utils/formatDate';

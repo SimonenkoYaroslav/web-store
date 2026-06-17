@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Button } from '@common/components';
+import { Button } from '@components';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { productClientService } from '@modules/product/services/client';
 import { createProductSchema } from './schemas/createProduct.schema';

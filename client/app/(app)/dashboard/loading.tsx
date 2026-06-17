@@ -1,4 +1,4 @@
-import { Skeleton, TableSkeleton } from '@common/components';
+import { Skeleton, TableSkeleton } from '@components';
 
 export default function DashboardLoading() {
     return (

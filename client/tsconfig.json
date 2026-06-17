@@ -35,6 +35,12 @@
       "@common/*": [
         "./src/modules/common/*"
       ],
+      "@components": [
+        "./src/components"
+      ],
+      "@components/*": [
+        "./src/components/*"
+      ],
       "@config": [
         "./src/config"
       ],

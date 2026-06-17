@@ -42,6 +42,8 @@ client/
 │   └── forbidden/
 │       └── page.tsx
 ├── src/
+│   ├── components/             # Shared, reusable UI primitives — import via `@components`
+│   │                          #   (Button, DataTable, FormInput, Loading, NavLink, Skeleton, TableSkeleton)
 │   ├── core/                   # Intentionally empty — reserved for future shared core utilities
 │   └── modules/                # Feature modules; each module is self-contained
 │       ├── auth/
@@ -53,7 +55,7 @@ client/
 │       │   └── utils/          # Pure helper functions (normalizeUserAccess, validateUserAccess)
 │       ├── catalog/            # Stub module — not yet implemented
 │       ├── common/
-│       │   ├── components/     # Shared UI components (FormInput)
+│       │   ├── components/     # App-level shared chrome (Navbar) — NOT generic primitives (those live in src/components)
 │       │   └── enums/          # CookieKey enum (note: file is misspelled CookieyKey.ts)
 │       └── user/
 │           ├── enums/          # UserRole enum
@@ -74,7 +76,8 @@ client/
 - **New page route** → `app/<route>/page.tsx`
 - **New protected route** → add `app/<route>/layout.tsx` wrapping `<AuthGuard>`
 - **New feature** → new folder under `src/modules/<feature>/` following the same subdirectory pattern
-- **Shared UI primitive** → `src/modules/common/components/`
+- **Shared UI primitive** (generic, feature-agnostic — buttons, inputs, tables, skeletons) → `src/components/`, import via `@components`
+- **App-level shared chrome** (depends on app modules/contexts, e.g. Navbar) → `src/modules/common/components/`
 - **New enum** → `src/modules/<module>/enums/`
 - **New service** → `src/modules/<module>/services/` — export a singleton instance
 
@@ -184,10 +187,19 @@ Defined in `tsconfig.json` — always use these instead of relative imports:
 |---|---|
 | `@modules/*` | `src/modules/*` |
 | `@common/*` | `src/modules/common/*` |
+| `@components`, `@components/*` | `src/components`, `src/components/*` |
+| `@auth/*` | `src/modules/auth/*` |
+| `@user/*` | `src/modules/user/*` |
+| `@catalog/*` | `src/modules/catalog/*` |
+| `@core/*` | `src/core/*` |
 | `@utils/*` | `utils/*` |
 | `@config` | `src/config` |
+| `@static` | `static` |
 
 Example: `import { authService } from '@modules/auth/services'`
+Example: `import { Button, DataTable } from '@components'`
+
+`@components` resolves to the barrel (`src/components/index.ts`) — always import shared primitives from the barrel, e.g. `import { Button } from '@components'`, not the internal file path.
 
 ---
 

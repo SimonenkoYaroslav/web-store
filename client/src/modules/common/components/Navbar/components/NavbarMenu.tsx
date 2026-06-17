@@ -1,7 +1,7 @@
 'use client'
 
 import { Tooltip } from '@mui/material'
-import { NavLink } from '@common/components'
+import { NavLink } from '@components'
 import { INavItem } from '@common/types'
 
 interface IProps {

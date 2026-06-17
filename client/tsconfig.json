@@ -53,6 +53,9 @@
       "@utils/*": [
         "./utils/*"
       ],
+      "@core/*": [
+        "./src/core/*"
+      ],
     },
     "typeRoots": [
       "./types",

@@ -1,0 +1,1 @@
+export { catalogNavItems } from './navigation'

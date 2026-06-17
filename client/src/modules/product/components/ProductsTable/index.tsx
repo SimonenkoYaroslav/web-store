@@ -17,6 +17,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import Image from 'next/image';
 import { IProduct } from '@modules/product/types';
 import { ProductType } from '@modules/product/enums/ProductType';
+import { formatDate } from '@modules/product/utils/formatDate';
 import { DeleteProductModal } from '../DeleteProductModal';
 import { EditProductModal } from '../EditProductModal';
 
@@ -70,7 +71,7 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
                                     {product.amount} {product.currency}
                                 </TableCell>
                                 <TableCell>
-                                    {new Date(product.created_at).toLocaleDateString()}
+                                    {formatDate(product.created_at)}
                                 </TableCell>
                                 <TableCell align="right">
                                     <IconButton

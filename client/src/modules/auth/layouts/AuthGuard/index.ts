@@ -1,39 +1,26 @@
-import { headers } from "next/headers";
+'use client'
+
 import { redirect } from "next/navigation";
 import { FC } from "react"
-import { userService } from "@modules/user/services";
+import { useUser } from "@modules/user";
 import { AccessType } from "@modules/auth/enums/AccessType";
-import normalizeUserAccess from "@modules/auth/utils/normilizeUserAccess";
-import validateUserAccess from "@modules/auth/utils/validateUserAcess";
-import { createClient } from "@utils/supabase/server";
+import validateUserAccess from "@modules/auth/utils/validateUserAccess";
+import normalizeAllowedAccess from "@modules/auth/utils/normalizeAllowedAccess";
 
 interface IProps {
     children: React.ReactNode
     access?: AccessType | AccessType[];
 }
 
-export const AuthGuard: FC<IProps> = async ({ children, access }) => {
-    const headersMap = await headers();
-    const currentPathname = headersMap.get('x-pathname') ?? '/';
+export const AuthGuard: FC<IProps> = ({ children, access }) => {
+    const { user } = useUser();
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        if (currentPathname === '/login') {
-            return children;
-        }
+    if (user === null) {
         redirect('/login');
     }
 
-    const currentUser = await userService.fetchCurrentUser();
-
-    if (currentUser === null) {
-        redirect('/login');
-    }
-
-    const allowedAccess = normalizeUserAccess(access);
-    const hasAccess = validateUserAccess(currentUser!.role, allowedAccess);
+    const allowedAccess = normalizeAllowedAccess(access);
+    const hasAccess = validateUserAccess(user.role, allowedAccess);
 
     if (!hasAccess) {
         redirect('/forbidden');

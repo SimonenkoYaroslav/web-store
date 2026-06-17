@@ -24,7 +24,7 @@ export const LogInForm: FC = () => {
         
         if (data.user.user_metadata.role === UserRole.ADMIN) {
             router.push('/dashboard')
-            return
+            return;
         }
 
         router.push('/catalog')

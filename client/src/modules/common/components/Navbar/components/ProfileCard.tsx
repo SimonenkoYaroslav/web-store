@@ -1,13 +1,16 @@
+'use client'
+
 import { Avatar, Tooltip } from '@mui/material'
 import LogoutIcon from '@mui/icons-material/Logout'
-import { IUser } from '@modules/user/types/user'
+import { useUser } from '@modules/user'
 
 interface IProps {
     isOpen: boolean
-    user: IUser | null
 }
 
-export const ProfileCard = ({ isOpen, user }: IProps) => {
+export const ProfileCard = ({ isOpen }: IProps) => {
+    const { user } = useUser()
+
     const initials = user
         ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
         : '?'

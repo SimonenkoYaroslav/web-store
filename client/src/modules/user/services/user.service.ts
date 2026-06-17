@@ -1,8 +1,8 @@
-import { createClient } from "../../../../utils/supabase/server";
-
+import { createClient } from '@utils/supabase/server';
+import { IUser } from '@modules/user/types/user';
 
 class UserService {
-    async fetchCurrentUser() {
+    async fetchCurrentUser(): Promise<IUser | null> {
         const supabase = await createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
@@ -18,9 +18,7 @@ class UserService {
         }
 
         return data;
-    }
+    };
 }
 
-
-const userService = new UserService;
-export default userService;
+export default new UserService;

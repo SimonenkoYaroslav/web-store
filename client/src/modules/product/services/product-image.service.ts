@@ -1,6 +1,5 @@
 import { createClient } from '@utils/supabase/client';
 import { BUCKET_ID } from '../../../../constants/storage';
-import { ICreateProduct, IUpdateProduct } from '../types';
 
 class ProductClientService {
     async uploadProductImage(productId: string, file: File): Promise<{ path: string; publicUrl: string }> {
@@ -39,32 +38,8 @@ class ProductClientService {
         }
     }
 
-    async createProduct(data: ICreateProduct): Promise<void> {
-        const supabase = createClient();
-        const { error } = await supabase.from('products').insert({
-            id: data.id,
-            name: data.name,
-            type: data.type,
-            amount: data.amount,
-            currency: data.currency,
-            image_url: data.imageUrl,
-        });
-        if (error) throw new Error(error.message);
-    }
 
-    async updateProduct(productId: string, data: IUpdateProduct): Promise<void> {
-        const supabase = createClient();
-        const { error } = await supabase.from('products').update({
-            name: data.name,
-            type: data.type,
-            amount: data.amount,
-            currency: data.currency,
-            ...(data.imageUrl && { image_url: data.imageUrl }),
-        }).eq('id', productId);
-        if (error) throw new Error(error.message);
-    }
-
-    async deleteProduct(productId: string): Promise<void> {
+    async deleteProductImages(productId: string) {
         const supabase = createClient();
 
         const folderPath = `product-image/${productId}`;
@@ -85,12 +60,6 @@ class ProductClientService {
             if (removeError) {
                 throw new Error(removeError.message);
             }
-        }
-
-        const { error } = await supabase.from('products').delete().eq('id', productId);
-
-        if (error) {
-            throw new Error(error.message);
         }
     }
 }

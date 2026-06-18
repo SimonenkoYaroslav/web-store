@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { Button } from '@components';
-import { productClientService } from '@modules/product/services/client';
 
 interface IProps {
     open: boolean;
@@ -26,7 +25,6 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, o
     const handleDelete = () => {
         startTransition(async () => {
             try {
-                await productClientService.deleteProduct(productId);
                 onClose();
                 router.refresh();
             } catch (err) {

@@ -1,8 +1,9 @@
-import { productService } from '@modules/product/services';
+import productServerService from '@modules/product/services/product.server.service';
 import { ProductsTable, AddProductButton } from '@modules/product/components';
+import { Suspense } from 'react';
 
 export default async function DashboardPage() {
-    const products = await productService.fetchProducts();
+    const products = await productServerService.fetchProducts();
 
     return (
         <div className="w-full p-6">
@@ -10,7 +11,9 @@ export default async function DashboardPage() {
                 <h1 className="text-2xl font-bold">Products</h1>
                 <AddProductButton />
             </div>
-            <ProductsTable products={products} />
+            <Suspense fallback={<p>Loading posts...</p>}>
+                <ProductsTable products={products} />
+            </Suspense>
         </div>
     );
 }

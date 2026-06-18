@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -8,19 +8,21 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    Button,
     TextField,
     Select,
     MenuItem,
     FormControl,
     InputLabel,
     FormHelperText,
+    CircularProgress,
 } from '@mui/material';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Button } from '@components';
+import { ImageUpload } from '@components';
 import { ProductType } from '@modules/product/enums/ProductType';
-import { productClientService } from '@modules/product/services/client';
 import { createProductSchema } from './schemas/createProduct.schema';
+import { createProduct } from './utils/createProduct';
+import { ICreateProduct } from '@modules/product/types';
 
 interface IProps {
     open: boolean;
@@ -29,7 +31,6 @@ interface IProps {
 
 export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
     const router = useRouter();
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     const {
         register,
@@ -40,42 +41,14 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
         formState: { errors, isSubmitting },
     } = useForm({ resolver: yupResolver(createProductSchema), mode: 'onChange' });
 
-    useEffect(() => {
-        return () => {
-            if (imagePreview) URL.revokeObjectURL(imagePreview);
-        };
-    }, [imagePreview]);
-
     const handleClose = () => {
-        if (imagePreview) URL.revokeObjectURL(imagePreview);
-        setImagePreview(null);
         reset();
         onClose();
     };
 
-    const { onChange: imageRegisterOnChange, ...imageFieldRest } = register('image');
-
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (imagePreview) URL.revokeObjectURL(imagePreview);
-        setImagePreview(files && files.length > 0 ? URL.createObjectURL(files[0]) : null);
-        imageRegisterOnChange(e);
-    };
-
-    const onSubmit = handleSubmit(async (data) => {
+    const onSubmit = handleSubmit(async (data: ICreateProduct) => {
         try {
-            const productId = crypto.randomUUID();
-            const file = (data.image as FileList)[0];
-            const { publicUrl } = await productClientService.uploadProductImage(productId, file);
-
-            await productClientService.createProduct({
-                id: productId,
-                name: data.name as string,
-                type: data.type as ProductType,
-                amount: data.amount as number,
-                currency: data.currency as string,
-                imageUrl: publicUrl,
-            });
+            await createProduct(data);
             handleClose();
             router.refresh();
         } catch (err) {
@@ -134,38 +107,10 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                         />
                     </div>
 
-                    <div>
-                        <Button
-                            component="label"
-                            variant="outlined"
-                            fullWidth
-                            color={errors.image ? 'error' : 'primary'}
-                        >
-                            {imagePreview ? 'Change Image' : 'Upload Image'}
-                            <input
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                hidden
-                                {...imageFieldRest}
-                                onChange={handleImageChange}
-                            />
-                        </Button>
-                        {errors.image && (
-                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.image.message}</p>
-                        )}
-                        {imagePreview && (
-                            <div className={`mt-2 rounded border overflow-hidden ${errors.image ? 'border-red-300' : 'border-gray-200'}`}>
-                                <Image
-                                    src={imagePreview}
-                                    alt="Preview"
-                                    width={500}
-                                    height={160}
-                                    unoptimized
-                                    className="w-full h-40 object-contain bg-gray-50"
-                                />
-                            </div>
-                        )}
-                    </div>
+                    <ImageUpload
+                        registration={register('image')}
+                        error={errors.image?.message}
+                    />
 
                     {errors.root && (
                         <p className="text-red-500 text-sm">{errors.root.message}</p>
@@ -176,7 +121,12 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                     <Button onClick={handleClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="contained" loading={isSubmitting}>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={isSubmitting}
+                        startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
+                    >
                         {isSubmitting ? 'Adding...' : 'Add Product'}
                     </Button>
                 </DialogActions>

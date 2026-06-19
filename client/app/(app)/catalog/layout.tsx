@@ -8,7 +8,7 @@ interface IProps {
 
 const CatalogLayout: FC<IProps> = ({ children }) => {
     return (
-        <MainLayout access={AccessType.ADMIN}>{children} </MainLayout>
+        <MainLayout access={[AccessType.USER, AccessType.ADMIN]}>{children} </MainLayout>
     )
 }
 

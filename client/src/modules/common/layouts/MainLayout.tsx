@@ -4,7 +4,7 @@ import { Navbar } from "../components"
 import { AccessType } from "@modules/auth/enums/AccessType"
 
 type IProps = PropsWithChildren<{
-    access: AccessType
+    access: AccessType | AccessType[]
     children: React.ReactNode
 }>
 

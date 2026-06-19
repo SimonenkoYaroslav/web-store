@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { filterNavItemsByAccess } from './utils/filterNavItemsByAccess';
 import { NavbarHeader } from './components/NavbarHeader';
 import { NavbarMenu } from './components/NavbarMenu';
-import { ProfileCard } from './components/ProfileCard';
+import { ProfileCard } from '@modules/user/components/ProfileCard';
 import { useUser } from '@modules/user/contexts/UserContext';
 
 

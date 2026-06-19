@@ -2,14 +2,18 @@
 
 import { Avatar, Tooltip } from '@mui/material'
 import LogoutIcon from '@mui/icons-material/Logout'
+import { useRouter } from 'next/navigation'
 import { useUser } from '@modules/user'
+import { authService } from '@modules/auth/services'
 
 interface IProps {
     isOpen: boolean
 }
 
 export const ProfileCard = ({ isOpen }: IProps) => {
+    const router = useRouter();
     const { user } = useUser()
+
 
     const initials = user
         ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
@@ -32,7 +36,10 @@ export const ProfileCard = ({ isOpen }: IProps) => {
                             <p className="text-xs text-gray-400 truncate">{user?.role}</p>
                         </div>
                     </div>
-                    <form action="/logout" method="POST">
+                    <form onSubmit={() => {
+                        authService.signOut();
+                        router.refresh();
+                    }} method="POST">
                         <button
                             type="submit"
                             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-700 hover:text-red-400 transition-colors duration-150"

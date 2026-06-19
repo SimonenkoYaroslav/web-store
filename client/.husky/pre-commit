@@ -1,1 +1,1 @@
-cd client && npm run lint
+cd client && npm run validate:env && npm run check:env-example && npm run lint

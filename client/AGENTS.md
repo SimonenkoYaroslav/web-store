@@ -18,7 +18,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Styling | Tailwind CSS v4 + Material UI v9 (`@mui/material`, `@mui/icons-material`, `@mui/material-nextjs`) |
 | Emotion | `@emotion/react`, `@emotion/styled`, `@emotion/cache` (MUI styling engine) |
 | Auth & DB | Supabase (`@supabase/ssr` 0.10, `@supabase/supabase-js` 2) |
-| Payments | `stripe` v22 (server SDK — wired as a dependency, no checkout flow yet) |
+| Payments | `stripe` v22 (server SDK — client initialized in `src/core/stripe/server.ts`; no checkout flow yet) |
 | Forms | `react-hook-form` v7 + `yup` v1 + `@hookform/resolvers` v5 |
 | HTTP | `axios` (dependency present, not yet used — all data access goes through the Supabase SDK) |
 | Cookies | `universal-cookie` v8 (client); Next.js `cookies()` API (server) |
@@ -60,7 +60,9 @@ client/
 │   ├── components/             # Shared, reusable UI primitives — import via `@components`
 │   │                          #   Button, DataTable (+IColumn), FormInput, ImageUpload,
 │   │                          #   Loading, NavLink, Skeleton, TableSkeleton
-│   ├── core/                   # Cross-cutting abstractions — AbstractStorageService
+│   ├── config/                 # Validated, typed env access — import `{ env }` from `@config`
+│   │                          #   (env.ts + env.schema.mjs shared with the validation scripts)
+│   ├── core/                   # Cross-cutting code — AbstractStorageService, stripe/server.ts (Stripe client)
 │   └── modules/                # Feature modules; each is self-contained (see Module structure)
 │       ├── auth/               # components (LogInForm, SignUpForm), enums (AccessType),
 │       │                       #   layouts (AuthGuard — client), services (auth.service),
@@ -80,6 +82,10 @@ client/
 │       └── storage/index.ts    # StorageService singleton (extends AbstractStorageService)
 ├── constants/
 │   └── storage.ts              # BUCKET_ID = "WebStore", BASE_BUCKET_URL
+├── scripts/
+│   ├── validate-env.mjs        # Validates the local .env against the schema (pre-commit)
+│   └── check-env-example.mjs   # Asserts .env.example lists every schema var (pre-commit / CI)
+├── .env.example                # Committed template of all env vars (kept in sync by the check above)
 ├── supabase/
 │   └── migrations/             # SQL migrations (users + products tables) — managed via Supabase CLI
 ├── proxy.ts                    # Next.js middleware entry (exports `proxy` + `config.matcher`)
@@ -254,7 +260,47 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  # Publishable key (browser-safe)
 OAUTH_SUPABASE_CLIENT_ID              # OAuth client ID (server-only)
 OAUTH_SUPABASE_CLIENT_SECRET          # OAuth secret (server-only — keep out of NEXT_PUBLIC_*)
 SITE_URL                              # http://localhost:3000 in dev
+STRIPE_SECRET_KEY                     # Stripe secret key (server-only) — used by src/core/stripe/server.ts
+STRIPE_PUBLISHBEL_KEY                 # Stripe publishable key. NOTE: misspelled, and not NEXT_PUBLIC_*
+                                      #   so it is NOT browser-exposed. Rename to
+                                      #   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY before using Stripe.js client-side.
 ```
+
+### Environment validation
+
+One **yup** schema, `src/config/env.schema.mjs`, is the single source of truth for which variables the
+app requires. It is plain ESM (`.mjs`) on purpose — no TS runner is installed, yet both the Node scripts
+and the TS app can import it. It currently enforces only the variables code actually reads
+(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`) so it never
+blocks on unused config. Three consumers:
+
+- **`src/config/env.ts` → `@config` (runtime, typed).** `import { env } from '@config'` gives a
+  validated, typed env object. It calls `validateSync` once at first import and **throws on the server
+  if anything is missing** (fail-fast at boot/build). **Server-only** — do not import `@config` from a
+  Client Component (server secrets are undefined in the browser bundle and validation would throw).
+  Currently used by `src/core/stripe/server.ts` and `utils/supabase/server.ts`. The browser client
+  (`utils/supabase/client.ts`) and the Edge middleware (`utils/supabase/proxy.ts`) still read
+  `process.env` directly by design.
+- **`scripts/validate-env.mjs` (`npm run validate:env`).** Loads `.env` like Next.js (`@next/env`) and
+  validates the developer's local env. Runs in pre-commit.
+- **`scripts/check-env-example.mjs` (`npm run check:env-example`).** Asserts the committed `.env.example`
+  declares every variable in the schema, so the template never drifts. Needs no secrets (CI-safe). Runs
+  in pre-commit.
+
+The pre-commit hook is `validate:env && check:env-example && lint`. **When new code needs a new env var:
+add it to `env.schema.mjs`, the `IEnv` interface in `env.ts`, and `.env.example`.**
+
+### Stripe
+
+Import the server client where you need it — it is a shared singleton, not a factory:
+
+```typescript
+import { stripe } from '@core/stripe/server';   // Server Components / Route Handlers / *.server.service.ts only
+```
+
+It pins `apiVersion: '2026-05-27.dahlia'` (the version bundled with `stripe` v22.2.2) and reads its secret
+from the validated `@config` env (so a missing `STRIPE_SECRET_KEY` fails fast). There is no browser-side
+Stripe.js client yet (`@stripe/stripe-js` is not installed).
 
 ---
 
@@ -298,7 +344,7 @@ Defined in `tsconfig.json` — always prefer these over relative imports:
 | `@catalog/*` | `src/modules/catalog/*` |
 | `@core/*` | `src/core/*` |
 | `@utils/*` | `utils/*` |
-| `@config` | `src/config` (reserved — does not exist yet) |
+| `@config` | `src/config` — validated env (`import { env } from '@config'`). No `@config/*` form. |
 | `@static` | `static` (reserved — does not exist yet) |
 
 Note there is **no `@dashboard` or `@product` alias** — import those via `@modules/dashboard`,
@@ -329,8 +375,9 @@ relative `../../../../constants/storage` path; `constants/` has no alias.
 
 A single flat config, `eslint.config.mjs` (ESLint 9), is what `npm run lint` runs. It spreads
 `eslint-config-next` (core-web-vitals + typescript) and then layers the house style that used to live
-in the legacy `.eslintrc.json` (now removed). A `.husky/pre-commit` hook runs `npm run lint`, so the
-tree must lint clean (errors block commits; warnings don't).
+in the legacy `.eslintrc.json` (now removed). The `.husky/pre-commit` hook runs
+`npm run validate:env && npm run lint` (see Environment validation below), so the tree must lint clean
+(errors block commits; warnings don't) **and** the local `.env` must satisfy the env schema.
 
 Enforced (errors): import order, alphabetized & grouped `builtin → external → internal → sibling →
 index → parent` with blank lines between groups (path aliases like `@modules/*` count as *internal*
@@ -410,7 +457,8 @@ You are my advisor, not my assistant. Your job is accuracy, not agreement. Follo
 
 - Catalog page content (only `catalogNavItems` + a stub `/catalog` page exist).
 - API routes (`app/api/` does not exist).
-- Stripe checkout / payment flow (SDK installed, not wired up).
+- Stripe checkout / payment flow (server client initialized in `src/core/stripe/server.ts`, but no
+  checkout sessions, webhooks, or browser Stripe.js yet).
 - Cart / orders (no UI, services, or tables).
 - Password reset flow.
 - Global state management beyond `UserContext` (no Redux/Zustand).

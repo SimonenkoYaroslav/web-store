@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react';
-import { filterNavItemsByAccess } from './utils/filterNavItemsByAccess';
-import { NavbarHeader } from './components/NavbarHeader';
-import { NavbarMenu } from './components/NavbarMenu';
+
 import { ProfileCard } from '@modules/user/components/ProfileCard';
 import { useUser } from '@modules/user/contexts/UserContext';
 
-
+import { NavbarHeader } from './components/NavbarHeader';
+import { NavbarMenu } from './components/NavbarMenu';
+import { filterNavItemsByAccess } from './utils/filterNavItemsByAccess';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false)

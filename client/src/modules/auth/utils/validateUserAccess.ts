@@ -1,5 +1,6 @@
-import { AccessType } from "../enums/AccessType";
 import { UserRole } from "@modules/user/enums/UserRole";
+
+import { AccessType } from "../enums/AccessType";
 
 const validateUserAccess = (userRole: UserRole, allowedAccess: AccessType[]): boolean => {
     if (allowedAccess.length === 0) {

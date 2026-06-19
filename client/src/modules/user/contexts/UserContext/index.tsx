@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, FC, PropsWithChildren, useContext } from 'react'
+
 import { IUser } from '@modules/user/types/user'
 
 interface IUserContext {

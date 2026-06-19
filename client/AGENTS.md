@@ -13,71 +13,90 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Layer | Technology |
 |---|---|
 | Framework | Next.js 16.2.6 (App Router) |
-| Language | TypeScript 5, strict mode |
-| Runtime | React 19 |
-| Styling | Tailwind CSS v4 + Material UI v9 |
+| Language | TypeScript 5, strict mode (`strict` + `strictNullChecks`) |
+| Runtime | React 19.2 |
+| Styling | Tailwind CSS v4 + Material UI v9 (`@mui/material`, `@mui/icons-material`, `@mui/material-nextjs`) |
+| Emotion | `@emotion/react`, `@emotion/styled`, `@emotion/cache` (MUI styling engine) |
 | Auth & DB | Supabase (`@supabase/ssr` 0.10, `@supabase/supabase-js` 2) |
-| Forms | `react-hook-form` v7 + `yup` v1 + `@hookform/resolvers` |
-| HTTP | `axios` (not yet used for Supabase calls — those go through the Supabase SDK) |
-| Cookies | `universal-cookie` v8 (client-side); Next.js `cookies()` API (server-side) |
+| Payments | `stripe` v22 (server SDK — wired as a dependency, no checkout flow yet) |
+| Forms | `react-hook-form` v7 + `yup` v1 + `@hookform/resolvers` v5 |
+| HTTP | `axios` (dependency present, not yet used — all data access goes through the Supabase SDK) |
+| Cookies | `universal-cookie` v8 (client); Next.js `cookies()` API (server) |
+| Git hooks | `husky` v9 (`.husky/`) |
+| Tooling | `prettier`, `supabase` CLI (devDependencies) |
 | Package manager | npm |
 
 Run dev server: `npm run dev` from `client/`.
+Lint: `npm run lint` / `npm run lint:fix`.
 
 ---
 
 ## Project Structure
 
+The App Router uses **route groups** to split unauthenticated (`(auth)`) from authenticated (`(app)`) areas. Route groups do not affect URLs — `(auth)/login/page.tsx` serves `/login`.
+
 ```
 client/
-├── app/                        # Next.js App Router — routes only, minimal logic
-│   ├── layout.tsx              # Root layout (no AuthGuard here)
-│   ├── dashboard/
-│   │   ├── layout.tsx          # Protected layout: wraps children in <AuthGuard access={AccessType.ADMIN}>
-│   │   └── page.tsx
-│   ├── catalog/
-│   │   └── page.tsx
-│   ├── login/
-│   │   └── page.tsx
-│   └── forbidden/
-│       └── page.tsx
+├── app/
+│   ├── layout.tsx              # Root layout. Server-fetches the current user and provides
+│   │                           #   it via <UserContextProvider>; wraps app in MUI AppRouterCacheProvider.
+│   ├── loading.tsx             # Root loading UI
+│   ├── error.tsx               # Root error boundary
+│   ├── globals.css
+│   ├── (auth)/                 # Unauthenticated area
+│   │   ├── layout.tsx          # Server layout: redirects already-authenticated users to /catalog
+│   │   ├── login/page.tsx      # renders <LogInForm>
+│   │   └── register/page.tsx   # renders <SignUpForm>
+│   └── (app)/                  # Authenticated area (each route guards itself via MainLayout)
+│       ├── catalog/
+│       │   ├── layout.tsx      # <MainLayout access={AccessType.ADMIN}>  (see Known Bugs #1)
+│       │   └── page.tsx
+│       ├── dashboard/
+│       │   ├── layout.tsx      # <MainLayout access={AccessType.ADMIN}>
+│       │   ├── loading.tsx
+│       │   └── page.tsx        # renders DashboardPage (server component, fetches products)
+│       └── forbidden/page.tsx
 ├── src/
 │   ├── components/             # Shared, reusable UI primitives — import via `@components`
-│   │                          #   (Button, DataTable, FormInput, Loading, NavLink, Skeleton, TableSkeleton)
-│   ├── core/                   # Intentionally empty — reserved for future shared core utilities
-│   └── modules/                # Feature modules; each module is self-contained
-│       ├── auth/
-│       │   ├── components/     # Client components (LogInForm)
-│       │   ├── enums/          # AccessType enum
-│       │   ├── layouts/        # Server components acting as route guards (AuthGuard)
-│       │   ├── services/       # Auth business logic (singleton class instances)
-│       │   ├── types/          # TypeScript interfaces for auth
-│       │   └── utils/          # Pure helper functions (normalizeUserAccess, validateUserAccess)
-│       ├── catalog/            # Stub module — not yet implemented
-│       ├── common/
-│       │   ├── components/     # App-level shared chrome (Navbar) — NOT generic primitives (those live in src/components)
-│       │   └── enums/          # CookieKey enum (note: file is misspelled CookieyKey.ts)
-│       └── user/
-│           ├── enums/          # UserRole enum
-│           ├── services/       # User business logic (singleton class instances)
-│           └── types/          # IUser interface
+│   │                          #   Button, DataTable (+IColumn), FormInput, ImageUpload,
+│   │                          #   Loading, NavLink, Skeleton, TableSkeleton
+│   ├── core/                   # Cross-cutting abstractions — AbstractStorageService
+│   └── modules/                # Feature modules; each is self-contained (see Module structure)
+│       ├── auth/               # components (LogInForm, SignUpForm), enums (AccessType),
+│       │                       #   layouts (AuthGuard — client), services (auth.service),
+│       │                       #   types, utils (validateUserAccess, normalizeAllowedAccess)
+│       ├── user/               # contexts (UserContext + useUser), components (ProfileCard),
+│       │                       #   enums (UserRole), services (user.service), types (IUser)
+│       ├── product/            # Full CRUD module — see "Product module" below
+│       ├── catalog/            # navigation (catalogNavItems) — page itself is a stub
+│       ├── dashboard/          # navigation (dashboardNavItems), pages/dashboard.tsx
+│       └── common/             # App chrome: components (Navbar), layouts (MainLayout),
+│                               #   enums (CookieKey), types (INavItem)
 ├── utils/
 │   └── supabase/
-│       ├── client.ts           # Browser Supabase client (use in 'use client' components)
-│       └── server.ts           # Server Supabase client (use in Server Components, Route Handlers)
-├── proxy.ts                    # Next.js middleware entry point (exports updateSession as `proxy`)
-├── next.config.ts
+│       ├── client.ts           # Browser Supabase client ('use client' components)
+│       ├── server.ts           # Server Supabase client (Server Components, Route Handlers)
+│       ├── proxy.ts            # updateSession() — middleware implementation
+│       └── storage/index.ts    # StorageService singleton (extends AbstractStorageService)
+├── constants/
+│   └── storage.ts              # BUCKET_ID = "WebStore", BASE_BUCKET_URL
+├── supabase/
+│   └── migrations/             # SQL migrations (users + products tables) — managed via Supabase CLI
+├── proxy.ts                    # Next.js middleware entry (exports `proxy` + `config.matcher`)
+├── next.config.ts              # images.remotePatterns allow the Supabase storage host
 ├── tsconfig.json
-└── .env                        # Supabase keys (NEXT_PUBLIC_* are browser-exposed)
+├── eslint.config.mjs           # Flat ESLint config (Next core-web-vitals + TS + house style)
+└── .env                        # Supabase + OAuth keys (NEXT_PUBLIC_* are browser-exposed)
 ```
 
 ### Where new code goes
 
-- **New page route** → `app/<route>/page.tsx`
-- **New protected route** → add `app/<route>/layout.tsx` wrapping `<AuthGuard>`
-- **New feature** → new folder under `src/modules/<feature>/` following the same subdirectory pattern
-- **Shared UI primitive** (generic, feature-agnostic — buttons, inputs, tables, skeletons) → `src/components/`, import via `@components`
-- **App-level shared chrome** (depends on app modules/contexts, e.g. Navbar) → `src/modules/common/components/`
+- **New page route** → `app/(app)/<route>/page.tsx` (authenticated) or `app/(auth)/<route>/page.tsx`
+- **New protected route** → add `app/(app)/<route>/layout.tsx` wrapping `<MainLayout access={...}>`
+- **New feature** → new folder under `src/modules/<feature>/` following the module layout below
+- **Shared UI primitive** (generic, feature-agnostic) → `src/components/`, import via `@components`
+- **App-level chrome** (depends on app modules/contexts, e.g. Navbar) → `src/modules/common/components/`
+- **Cross-cutting abstraction** (interfaces/base classes) → `src/core/`
 - **New enum** → `src/modules/<module>/enums/`
 - **New service** → `src/modules/<module>/services/` — export a singleton instance
 
@@ -87,23 +106,29 @@ client/
 
 ### Module structure
 
-Each module under `src/modules/` follows this internal layout:
+Each module under `src/modules/` follows this internal layout (subfolders present as needed):
 
 ```
 <module>/
 ├── components/      # React components ('use client' when they need browser APIs)
+├── contexts/        # React context providers + hooks ('use client')
 ├── enums/           # String enums
-├── layouts/         # Async Server Components used as wrappers (guards, providers)
+├── layouts/         # Wrapper components (guards, providers)
+├── navigation/      # Nav item definitions (INavItem[])
+├── pages/           # Page-level server components composed by app/ routes
 ├── services/        # Classes exported as singletons via `export default new MyService`
-├── types/           # TypeScript interfaces (named with I prefix: IUser, ISignIn)
+├── types/           # TypeScript interfaces (I prefix: IUser, ISignIn)
 └── utils/           # Pure functions, no side effects
 ```
 
-Modules export their public API through an `index.ts` barrel — always import from the barrel, not from internal files directly.
+Modules export their public API through an `index.ts` barrel — always import from the barrel
+(`@modules/product`), not from internal files, except where a file is explicitly server-only
+(e.g. `product.server.service.ts`, imported by its full path from server components).
 
 ### Service pattern
 
-Services are plain TypeScript classes instantiated once and exported as a default singleton:
+Services are plain TypeScript classes instantiated once and exported as a default singleton, then
+re-exported by name from the module's `services/index.ts`:
 
 ```typescript
 class AuthService {
@@ -112,76 +137,156 @@ class AuthService {
 export default new AuthService;
 ```
 
-Services do **not** hold state. They are thin wrappers around Supabase SDK calls.
+Services are thin, stateless wrappers around Supabase SDK calls. **They are split by execution
+context:**
+
+- **Client services** call `createClient()` from `@utils/supabase/client` and run only in
+  `'use client'` components (e.g. `auth.service.ts`, `user.service.ts` is the exception — see below,
+  `product.service.ts`, `product-image.service.ts`).
+- **Server services** call `createClient()` from `@utils/supabase/server` and run only in Server
+  Components / Route Handlers. Name them `*.server.service.ts` (e.g. `product.server.service.ts`).
+  `user.service.ts` is a server service.
 
 ### Server vs Client components
 
-- Default to **Server Components** (no directive needed)
-- Add `'use client'` only when the component uses browser APIs, event handlers, `useState`, or `useEffect`
-- Services that call `createClient()` from `utils/supabase/server.ts` must run in a Server Component or Route Handler
-- Services that call `createClient()` from `utils/supabase/client.ts` must run in a `'use client'` component
+- Default to **Server Components** (no directive).
+- Add `'use client'` only for browser APIs, event handlers, `useState`, `useEffect`, or context hooks.
+- Pick the Supabase client that matches the context (see Service pattern). Mixing them throws at runtime.
 
-### Route protection (two-layer)
+### Auth & route protection (three layers)
+
+Auth state lives in **two synchronized places** and the guards read from different ones — keep this
+in mind when debugging redirects.
 
 **Layer 1 — Middleware** (`proxy.ts` → `utils/supabase/proxy.ts`):
-- Runs on every request via `export const config = { matcher: [...] }`
-- Injects `x-pathname` header (used by AuthGuard to know current route)
-- Calls `supabase.auth.getClaims()` — if no active session, redirects to `/login`
-- Exceptions: `/login` and `/auth` routes pass through unauthenticated
+- Runs on every request (`config.matcher` excludes `_next/*` and static image extensions).
+- Injects `x-pathname` header.
+- Calls `supabase.auth.getClaims()`; if there is no session, redirects to `/login`.
+- Pass-through exceptions: `/` (home), `/login*`, `/register*`.
 
-**Layer 2 — AuthGuard** (`src/modules/auth/layouts/AuthGuard/index.ts`):
-- Async Server Component; wrap any route's layout with it
-- Reads `access_token` cookie → fetches `currentUser` from `users` table → checks role
-- Accepts `access?: AccessType | AccessType[]` — omit for "any authenticated user"
-- Usage: `<AuthGuard access={AccessType.ADMIN}>{children}</AuthGuard>`
+**Layer 2 — `(auth)` server layout** (`app/(auth)/layout.tsx`):
+- Server component; calls `userService.fetchCurrentUser()`.
+- If a user exists, redirects to `/catalog` (keeps logged-in users out of login/register).
+
+**Layer 3 — `AuthGuard`** (`src/modules/auth/layouts/AuthGuard/index.ts`, **client component**):
+- Reached through `MainLayout` (`src/modules/common/layouts/MainLayout.tsx`), which renders
+  `<AuthGuard access={...}><Navbar />{children}</AuthGuard>`.
+- Reads the user from `useUser()` (the `UserContext`), **not** from cookies.
+- `user === null` → `redirect('/login')`; access mismatch → `redirect('/forbidden')`.
+- Access is checked with `validateUserAccess(user.role, normalizeAllowedAccess(access))`.
+
+**UserContext** (`src/modules/user/contexts/UserContext`): the root layout server-fetches the current
+user once and feeds it to `UserContextProvider`. Because the root layout does **not** re-run on soft
+(client-side) navigation, anything that changes auth state on the client must force the server data to
+refresh — e.g. `LogInForm` uses `window.location.assign('/catalog')` (a hard navigation) after sign-in.
+A plain `router.push` leaves `useUser()` stale and causes a `/login ↔ /catalog` redirect loop between
+Layer 2 and Layer 3.
+
+### Forms
+
+`react-hook-form` + `yup`. Schemas live in a `schemas/` subfolder next to the component. Submit handlers
+catch service errors into local `serverError` state and surface them via a MUI `<Alert>` (see
+`LogInForm`, `SignUpForm`). Standard hook setup:
+
+```typescript
+const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: yupResolver(mySchema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+})
+```
 
 ---
 
 ## Database — Supabase
 
-The project uses **Supabase (managed PostgreSQL)**. There are no local migration files — schema is managed in the Supabase dashboard.
+Schema is now version-controlled as **SQL migrations** in `supabase/migrations/` and applied via the
+Supabase CLI (`supabase` devDependency, `supabase/` project dir). This replaces the old "dashboard-only,
+no local migrations" workflow — add a migration file rather than editing schema by hand.
 
-### Known tables
+### Tables
 
-| Table | Key columns |
-|---|---|
-| `users` | `email`, `firstName`, `lastName`, `avatar`, `role` (string: `'Admin'` \| `'User'`) |
+| Table | Key columns | Notes |
+|---|---|---|
+| `users` | `id` (uuid, PK, FK → `auth.users.id`), `email`, `"firstName"`, `"lastName"`, `avatar`, `role` (`public."UserRole"`), `created_at`, `updated_at` | camelCase columns are quoted to match `IUser`. RLS: a user may read/update only their own row. |
+| `products` | `id` (uuid, PK), `name`, `image_url`, `amount` (`numeric(12,2)`), `currency`, `type` (`public."ProductType"`), `created_at` | snake_case columns match `IProduct`. RLS: `select` is public (anon + authenticated); insert/update/delete require authenticated. |
+
+Postgres enums mirror the TS enums: `public."UserRole"` (`'Admin' | 'User'`),
+`public."ProductType"` (`'Subscription' | 'Single'`).
+
+### Role storage & sync
+
+User role lives in two places:
+1. `users.role` column (read by `userService.fetchCurrentUser()` → `UserContext`).
+2. `auth.users.user_metadata.role` (set at sign-up by `authService.signUpUser`, defaults to `UserRole.USER`).
+
+On sign-up a `handle_new_user` trigger copies `user_metadata` (`firstName`, `lastName`, `avatar`,
+`role`) into a new `public.users` row, so the two start in sync automatically. If you change a role
+later, update **both** places.
 
 ### Accessing Supabase
 
-Always pick the right client for the context:
-
 ```typescript
-// In Server Components, layouts, Route Handlers:
-import { createClient } from 'utils/supabase/server';
+// Server Components, layouts, Route Handlers, *.server.service.ts:
+import { createClient } from '@utils/supabase/server';
 const supabase = await createClient();
 
-// In 'use client' components:
-import { createClient } from 'utils/supabase/client';
-const supabase = await createClient();
+// 'use client' components and client services:
+import { createClient } from '@utils/supabase/client';
+const supabase = createClient();   // not awaited — browser client is synchronous
 ```
 
-User role is stored in **two places**:
-1. `users.role` column (used by `userService.fetchCurrentUser()`)
-2. `auth.users.user_metadata.role` (used by `LogInForm` after sign-in to decide redirect route)
+### Storage
 
-Both must be kept in sync when a user's role changes.
+- Bucket id and base URL are centralized in `constants/storage.ts` (`BUCKET_ID = "WebStore"`).
+- `src/core/AbstractStorageService.ts` defines the upload/download contract; `utils/supabase/storage`
+  implements it as a singleton.
+- Product images live under `product-image/<productId>/...`. `product-image.service.ts` (client)
+  handles upload/cleanup; `product.service.ts` removes a product's image folder on delete.
+- `next.config.ts` whitelists the Supabase storage host under `images.remotePatterns` so `next/image`
+  can render product images.
 
 ### Environment variables
 
 ```
-NEXT_PUBLIC_SUPABASE_URL          # Supabase project URL (browser-safe)
+NEXT_PUBLIC_SUPABASE_URL              # Supabase project URL (browser-safe)
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY  # Publishable key (browser-safe)
-OAUTH_SUPABASE_CLIENT_ID          # OAuth client ID (server-only)
-OAUTH_SUPABASE_CLIENT_SECRET      # OAuth secret (server-only — keep out of NEXT_PUBLIC_*)
-SITE_URL                          # http://localhost:3000 in dev
+OAUTH_SUPABASE_CLIENT_ID              # OAuth client ID (server-only)
+OAUTH_SUPABASE_CLIENT_SECRET          # OAuth secret (server-only — keep out of NEXT_PUBLIC_*)
+SITE_URL                              # http://localhost:3000 in dev
 ```
+
+---
+
+## Product module
+
+The most fully built feature; use it as the reference for new CRUD modules.
+
+- **components/** — `ProductsTable`, `AddProductButton`, `AddProductModal`, `EditProductModal`,
+  `DeleteProductModal`. Add/Edit modals use the shared `<ImageUpload>` primitive (owns blob-preview
+  state and object-URL lifecycle) and per-modal yup schemas + `utils/` create/update helpers.
+- **services/** — `product.service.ts` (client: create/update/delete + storage cleanup),
+  `product.server.service.ts` (server: `fetchProducts`), `product-image.service.ts` (client: image
+  upload/delete).
+- **types/** — `IProduct`, `ICreateProduct`, `IUpdateProduct`.
+- **enums/** — `ProductType`.
+- **utils/image/** — pure validation helpers (allowed format/size, minimum dimensions, dimension
+  reading) plus shared `constraints`/`messages`, re-exported from `utils/image/index.ts`.
+
+`DashboardPage` (`src/modules/dashboard/pages/dashboard.tsx`) is a server component that calls
+`productServerService.fetchProducts()` and renders the table.
+
+### Navigation
+
+Sidebar items are declared per feature as `INavItem[]` (`@common/types`) in each module's
+`navigation/` folder (`catalogNavItems`, `dashboardNavItems`). `Navbar` composes them via
+`filterNavItemsByAccess(user?.role)`, which hides items whose `access` the current role fails.
 
 ---
 
 ## TypeScript Path Aliases
 
-Defined in `tsconfig.json` — always use these instead of relative imports:
+Defined in `tsconfig.json` — always prefer these over relative imports:
 
 | Alias | Resolves to |
 |---|---|
@@ -193,13 +298,13 @@ Defined in `tsconfig.json` — always use these instead of relative imports:
 | `@catalog/*` | `src/modules/catalog/*` |
 | `@core/*` | `src/core/*` |
 | `@utils/*` | `utils/*` |
-| `@config` | `src/config` |
-| `@static` | `static` |
+| `@config` | `src/config` (reserved — does not exist yet) |
+| `@static` | `static` (reserved — does not exist yet) |
 
-Example: `import { authService } from '@modules/auth/services'`
-Example: `import { Button, DataTable } from '@components'`
-
-`@components` resolves to the barrel (`src/components/index.ts`) — always import shared primitives from the barrel, e.g. `import { Button } from '@components'`, not the internal file path.
+Note there is **no `@dashboard` or `@product` alias** — import those via `@modules/dashboard`,
+`@modules/product`. `@components` resolves to the barrel (`src/components/index.ts`) — import primitives
+from the barrel, not internal file paths. A few files still reach Supabase storage constants via the
+relative `../../../../constants/storage` path; `constants/` has no alias.
 
 ---
 
@@ -207,51 +312,81 @@ Example: `import { Button, DataTable } from '@components'`
 
 ### Naming
 
-- Interfaces: `I` prefix — `IUser`, `ISignIn`, `IProps`
-- Enums: PascalCase name, string values matching display text — `UserRole.ADMIN = 'Admin'`
-- Files: `camelCase` for utilities/services, `PascalCase` component folders with `index.tsx` inside
-- Singleton service exports: `export default new MyService` (no semicolon after the class closing brace is acceptable, but be consistent)
+- Interfaces: `I` prefix — `IUser`, `ISignIn`, `IProps` (enforced by `@typescript-eslint/naming-convention`).
+- Enums: PascalCase name, string values matching display text — `UserRole.ADMIN = 'Admin'`.
+- Files: `camelCase` for utilities/services; PascalCase component folders with `index.tsx` inside.
+- Server-only services: suffix `*.server.service.ts`.
+- Singleton service exports: `export default new MyService`.
 
 ### Styling
 
-Use **Tailwind CSS** for all component styles — apply utility classes directly in JSX (e.g., `className="flex flex-col min-h-full"`). Do not create `styles.module.scss` files.
-
-Use **Material UI** components for interactive form elements (TextField, Button, Box). Do not mix MUI layout components with Tailwind — pick one system per concern.
-
-### Form pattern
-
-```typescript
-const { register, formState: { errors }, getValues } = useForm({
-    resolver: yupResolver(mySchema),
-    mode: 'onChange',
-    reValidateMode: 'onChange',
-})
-```
-
-Define validation schemas in a `schemas/` subfolder next to the component.
+- **Tailwind CSS v4** for layout and custom styling — utility classes in JSX.
+- **Material UI v9** for interactive elements (TextField, Button, Box, Avatar, Tooltip, Alert) and
+  icons (`@mui/icons-material`). Don't create `*.module.scss` files.
+- Don't mix MUI layout components with Tailwind layout for the same concern — pick one per concern.
 
 ### ESLint
 
-Max line length: 120 characters. Import order is enforced: builtin → external → internal → sibling → index. Do not disable ESLint rules without a comment explaining why.
+A single flat config, `eslint.config.mjs` (ESLint 9), is what `npm run lint` runs. It spreads
+`eslint-config-next` (core-web-vitals + typescript) and then layers the house style that used to live
+in the legacy `.eslintrc.json` (now removed). A `.husky/pre-commit` hook runs `npm run lint`, so the
+tree must lint clean (errors block commits; warnings don't).
+
+Enforced (errors): import order, alphabetized & grouped `builtin → external → internal → sibling →
+index → parent` with blank lines between groups (path aliases like `@modules/*` count as *internal*
+via `import/internal-regex`); `object-curly-spacing: always`; `eol-last`; `no-duplicate-imports`;
+`no-multiple-empty-lines`; `no-param-reassign` (props allowed); `@typescript-eslint/naming-convention`
+(interfaces must match `^I[A-Z]`).
+
+Warnings (fix when you touch the file): `max-len` 120 (comments ignored), `curly`, `no-return-await`,
+`no-unneeded-ternary`, `prefer-destructuring`, `padding-line-between-statements` (blank lines around
+blocks/multiline declarations), `@typescript-eslint/no-unused-vars` (`^_` ignored).
+
+Run `npm run lint:fix` to auto-fix the formatting-class rules. Don't disable rules without a comment.
+
+**Not enforced** (deliberately not migrated): prettier-as-eslint-rule (`eslint-plugin-prettier` not
+installed; prettier defaults are 2-space and would churn this 4-space codebase — add a matching
+`.prettierrc` first if you want it), jest rules (no tests), and the `strict-null-checks` plugin
+(redundant with `strictNullChecks` in tsconfig).
 
 ---
 
 ## Known Bugs & Technical Debt
 
-These exist in the current codebase. Do not replicate the pattern; fix them when touching the relevant file:
+Fix these when you touch the relevant file; don't replicate the patterns.
 
-1. **AuthGuard inverted redirect** ([`src/modules/auth/layouts/AuthGuard/index.ts:38`](src/modules/auth/layouts/AuthGuard/index.ts#L38))
-   The condition `if (currentUser && hasAccess) redirect('/forbidden')` is backwards — it redirects users who DO have access to `/forbidden`. The correct logic is `if (!hasAccess)`.
+1. **`/catalog` requires `AccessType.ADMIN`** (`app/(app)/catalog/layout.tsx`). A normal `User`-role
+   account is post-login redirected to `/catalog` and then bounced to `/forbidden`. If catalog is meant
+   for any signed-in user, change it to `AccessType.USER` or drop the `access` prop. Confirm intent
+   before changing.
 
-2. **Typo in CookieKey filename** — the file is `CookieyKey.ts` (extra `y`). The enum itself is named correctly as `CookieKey`. When creating new imports, use `@modules/common/enums/CookieyKey` until the file is renamed.
+2. **Typo in `CookieKey` filename** — the file is `CookieyKey.ts` (extra `y`); the enum inside is
+   correctly named `CookieKey`. Import from `@modules/common/enums/CookieyKey` until renamed. (The
+   cookie-based access-token flow it was built for is largely unused now.)
 
-3. **`userService.fetchCurrentUser()` fetches all users** ([`src/modules/user/services/user.service.ts:9`](src/modules/user/services/user.service.ts#L9)) — `supabase.from('users').select()` has no filter. It should filter by the authenticated user's ID or email.
+3. **`userService.fetchCurrentUser()` has no explicit filter** (`src/modules/user/services/user.service.ts`)
+   — it does `auth.getUser()` then `from('users').select('*').single()`. It returns the right row only
+   because RLS scopes `select` to `auth.uid()`. Add an explicit `.eq('id', user.id)` so it doesn't break
+   if RLS changes.
 
-4. **Cookie set before error check** in `authService.signInUser()` — the access token is written to cookies before checking if the Supabase call returned an error. If sign-in fails, a `null`/`undefined` token gets stored.
+4. **Duplicate access-normalizer utils** — `normalizeAllowedAccess.ts` and `normalizeUserAccess.ts` are
+   byte-for-byte identical. Only `normalizeAllowedAccess` is used; `normalizeUserAccess` is dead code
+   (and has trailing whitespace). Delete the duplicate.
 
-5. **Debug `console.log` calls** in `auth.service.ts` and `user.service.ts` — remove before shipping.
+5. **Duplicate enums** — `AccessType` and `UserRole` are identical (`'Admin' | 'User'`).
+   `validateUserAccess` casts a `UserRole` to `AccessType`. Consider collapsing to one.
 
-6. **No error boundary around `LogInForm` submit** — `authService.signInUser()` throws on failure but the form's `onSubmit` handler does not catch it, so auth errors are unhandled.
+6. **Overlapping product-image cleanup methods** — `product-image.service.ts` has both
+   `deleteProductImages` and `deleteProductImagesExcept` plus folder-deletion logic duplicated in
+   `product.service.deleteProduct`. Consolidate.
+
+7. **`LogInForm` imports `UserRole` but never uses it** — leftover from the old role-based redirect.
+   Remove the unused import.
+
+8. **`SignUpForm` uses soft `router.push` after sign-up** — fine when sign-up returns no session
+   (redirect to `/login`), but if email confirmation is disabled and a session is returned, the
+   `router.push('/catalog')` hits the same stale-`UserContext` problem described in Layer 3. Prefer a
+   hard navigation when a session exists.
 
 ---
 
@@ -273,10 +408,11 @@ You are my advisor, not my assistant. Your job is accuracy, not agreement. Follo
 
 ## What Is Not Yet Implemented
 
-- Catalog module (stub only — `src/modules/catalog/index.ts` is empty)
-- API routes (`app/api/` does not exist)
-- Sign-up / password reset flows
-- Cart functionality
-- Any product/order data model or Supabase tables beyond `users`
-- Global state management (no Redux, Zustand, or Context set up yet)
-- Tests
+- Catalog page content (only `catalogNavItems` + a stub `/catalog` page exist).
+- API routes (`app/api/` does not exist).
+- Stripe checkout / payment flow (SDK installed, not wired up).
+- Cart / orders (no UI, services, or tables).
+- Password reset flow.
+- Global state management beyond `UserContext` (no Redux/Zustand).
+- `@config` / `@static` targets (aliases reserved, directories absent).
+- Tests (Jest plugins referenced in `.eslintrc.json`, but no test setup or specs).

@@ -1,7 +1,5 @@
 'use client'
 
-import { FC } from 'react';
-import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
     Dialog,
@@ -18,11 +16,15 @@ import {
     CircularProgress,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { FC } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+
 import { ImageUpload } from '@components';
 import { ProductType } from '@modules/product/enums/ProductType';
+import { ICreateProduct } from '@modules/product/types';
+
 import { createProductSchema } from './schemas/createProduct.schema';
 import { createProduct } from './utils/createProduct';
-import { ICreateProduct } from '@modules/product/types';
 
 interface IProps {
     open: boolean;

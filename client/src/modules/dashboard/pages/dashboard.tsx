@@ -1,6 +1,7 @@
-import productServerService from '@modules/product/services/product.server.service';
-import { ProductsTable, AddProductButton } from '@modules/product/components';
 import { Suspense } from 'react';
+
+import { ProductsTable, AddProductButton } from '@modules/product/components';
+import productServerService from '@modules/product/services/product.server.service';
 
 export default async function DashboardPage() {
     const products = await productServerService.fetchProducts();

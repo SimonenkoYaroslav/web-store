@@ -9,7 +9,8 @@ import { readImageDimensions } from './readImageDimensions';
  */
 export const hasMinimumDimensions = async (value: unknown): Promise<boolean> => {
     const file = firstFile(value);
-    if (!file) return true;
+
+    if (!file) {return true;}
 
     try {
         const { width, height } = await readImageDimensions(file);

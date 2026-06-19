@@ -36,6 +36,4 @@ const FormInput: FC<IFormInput> = ({ control, name, label, type }) => {
     )
 }
 
-
-
 export default FormInput

@@ -1,15 +1,16 @@
 'use client'
 
-import { TextField, Box, Alert } from "@mui/material";
-
-import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { signInSchema } from "./schemas/signIn.schema";
-import { FC, useState } from "react";
+import { TextField, Box, Alert } from "@mui/material";
 import Link from "next/link";
+import { FC, useState } from "react";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@components";
 import { authService } from "@modules/auth/services";
 import { UserRole } from "@modules/user/enums/UserRole";
+
+import { signInSchema } from "./schemas/signIn.schema";
 
 export const LogInForm: FC = () => {
     const [serverError, setServerError] = useState<string | null>(null);
@@ -31,7 +32,6 @@ export const LogInForm: FC = () => {
             setServerError(error instanceof Error ? error.message : 'Unable to sign in. Please try again.');
         }
     })
-
 
     return (
         <div className="flex justify-center items-center h-screen">

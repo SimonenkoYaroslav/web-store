@@ -1,14 +1,15 @@
 'use client'
 
-import { Chip, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import { Chip, IconButton } from '@mui/material';
+import Image from 'next/image';
+import { FC, useState } from 'react';
+
 import { DataTable, IColumn } from '@components';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { IProduct } from '@modules/product/types';
 import { formatDate } from '@modules/product/utils/formatDate';
-import Image from 'next/image';
-import { FC, useState } from 'react';
 
 import { DeleteProductModal } from '../DeleteProductModal';
 import { EditProductModal } from '../EditProductModal';

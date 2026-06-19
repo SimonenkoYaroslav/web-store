@@ -1,6 +1,7 @@
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
+
 import { UserContextProvider } from '@modules/user';
 import { userService } from '@modules/user/services';
 import "./globals.css";

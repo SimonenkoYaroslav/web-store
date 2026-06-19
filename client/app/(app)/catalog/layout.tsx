@@ -1,6 +1,7 @@
+import { FC } from "react"
+
 import { AccessType } from "@modules/auth/enums/AccessType"
 import { MainLayout } from "@modules/common/layouts/MainLayout"
-import { FC } from "react"
 
 interface IProps {
     children: React.ReactNode

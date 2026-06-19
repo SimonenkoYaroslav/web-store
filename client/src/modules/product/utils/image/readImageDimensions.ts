@@ -17,6 +17,7 @@ export const readImageDimensions = (file: File): Promise<IImageDimensions> =>
             URL.revokeObjectURL(url);
             resolve({ width: img.naturalWidth, height: img.naturalHeight });
         };
+
         img.onerror = () => {
             URL.revokeObjectURL(url);
             reject(new Error('Unable to read image'));

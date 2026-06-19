@@ -1,8 +1,9 @@
 'use client'
 
 import { Tooltip } from '@mui/material'
-import { NavLink } from '@components'
+
 import { INavItem } from '@common/types'
+import { NavLink } from '@components'
 
 interface IProps {
     isOpen: boolean

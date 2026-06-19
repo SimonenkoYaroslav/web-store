@@ -1,7 +1,5 @@
 'use client'
 
-import { FC, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
     Dialog,
@@ -16,9 +14,13 @@ import {
     FormHelperText,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { FC, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+
 import { Button, ImageUpload } from '@components';
-import { IProduct } from '@modules/product/types';
 import { ProductType } from '@modules/product/enums/ProductType';
+import { IProduct } from '@modules/product/types';
+
 import { editProductSchema } from './schemas/editProduct.schema';
 import { updateProduct } from './utils/updateProduct';
 

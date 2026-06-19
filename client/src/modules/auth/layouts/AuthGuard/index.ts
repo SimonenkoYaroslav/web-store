@@ -2,10 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { FC } from "react"
-import { useUser } from "@modules/user";
+
 import { AccessType } from "@modules/auth/enums/AccessType";
-import validateUserAccess from "@modules/auth/utils/validateUserAccess";
 import normalizeAllowedAccess from "@modules/auth/utils/normalizeAllowedAccess";
+import validateUserAccess from "@modules/auth/utils/validateUserAccess";
+import { useUser } from "@modules/user";
 
 interface IProps {
     children: React.ReactNode

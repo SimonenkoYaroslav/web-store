@@ -1,6 +1,5 @@
 'use client'
 
-import { FC, useTransition, useState } from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -8,6 +7,8 @@ import {
     DialogActions,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { FC, useTransition, useState } from 'react';
+
 import { Button } from '@components';
 
 interface IProps {

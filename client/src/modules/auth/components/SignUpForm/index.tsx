@@ -1,15 +1,16 @@
 'use client'
 
-import { TextField, Box, Alert } from "@mui/material";
-
-import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useRouter } from "next/navigation";
+import { TextField, Box, Alert } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FC, useState } from "react";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@components";
 import { authService } from "@modules/auth/services";
 import { ISignUp } from "@modules/auth/types/auth.types";
+
 import { signUpSchema } from "./schemas/signUp.schema";
 
 type SignUpFormValues = ISignUp & { confirmPassword: string };

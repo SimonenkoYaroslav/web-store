@@ -1,6 +1,5 @@
 import { AccessType } from "../enums/AccessType";
 
-
 const normalizeAllowedAccess = (access?: AccessType | AccessType[]): AccessType[] => {
     if (!access) {
         return [];

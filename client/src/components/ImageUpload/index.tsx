@@ -1,8 +1,9 @@
 'use client'
 
+import Image from 'next/image';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
-import Image from 'next/image';
+
 import { Button } from '@components';
 
 interface IImageUploadProps {
@@ -36,13 +37,15 @@ const ImageUpload: FC<IImageUploadProps> = ({
 
     useEffect(() => {
         return () => {
-            if (preview) URL.revokeObjectURL(preview);
+            if (preview) {URL.revokeObjectURL(preview);}
         };
     }, [preview]);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (preview) URL.revokeObjectURL(preview);
+        const { files } = e.target;
+
+        if (preview) {URL.revokeObjectURL(preview);}
+
         const hasFile = !!files && files.length > 0;
         setPreview(hasFile ? URL.createObjectURL(files[0]) : null);
         onFileChange?.(hasFile);

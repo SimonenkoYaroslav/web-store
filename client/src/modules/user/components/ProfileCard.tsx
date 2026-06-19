@@ -1,10 +1,11 @@
 'use client'
 
-import { Avatar, Tooltip } from '@mui/material'
 import LogoutIcon from '@mui/icons-material/Logout'
+import { Avatar, Tooltip } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { useUser } from '@modules/user'
+
 import { authService } from '@modules/auth/services'
+import { useUser } from '@modules/user'
 
 interface IProps {
     isOpen: boolean
@@ -13,7 +14,6 @@ interface IProps {
 export const ProfileCard = ({ isOpen }: IProps) => {
     const router = useRouter();
     const { user } = useUser()
-
 
     const initials = user
         ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()

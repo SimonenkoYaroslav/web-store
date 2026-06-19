@@ -1,4 +1,5 @@
 import { object, string, number, mixed } from 'yup';
+
 import { ProductType } from '@modules/product/enums/ProductType';
 import {
     IMAGE_DIMENSIONS_MESSAGE,

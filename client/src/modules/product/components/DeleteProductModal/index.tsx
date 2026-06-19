@@ -6,11 +6,9 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Button,
-    CircularProgress,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { productClientService } from '@modules/product/services/client';
+import { Button } from '@components';
 
 interface IProps {
     open: boolean;
@@ -27,7 +25,6 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, o
     const handleDelete = () => {
         startTransition(async () => {
             try {
-                await productClientService.deleteProduct(productId);
                 onClose();
                 router.refresh();
             } catch (err) {
@@ -59,9 +56,8 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, o
                 <Button
                     variant="contained"
                     color="error"
-                    disabled={isPending}
+                    loading={isPending}
                     onClick={handleDelete}
-                    startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : null}
                 >
                     {isPending ? 'Deleting...' : 'Delete'}
                 </Button>

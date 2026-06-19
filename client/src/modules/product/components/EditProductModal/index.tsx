@@ -1,6 +1,6 @@
 'use client'
 
-import { FC, useEffect, useState } from 'react';
+import { FC, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -8,21 +8,19 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Button,
     TextField,
     Select,
     MenuItem,
     FormControl,
     InputLabel,
     FormHelperText,
-    CircularProgress,
 } from '@mui/material';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Button, ImageUpload } from '@components';
 import { IProduct } from '@modules/product/types';
 import { ProductType } from '@modules/product/enums/ProductType';
-import { productClientService } from '@modules/product/services/client';
 import { editProductSchema } from './schemas/editProduct.schema';
+import { updateProduct } from './utils/updateProduct';
 
 interface IProps {
     open: boolean;
@@ -32,7 +30,6 @@ interface IProps {
 
 export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
     const router = useRouter();
-    const [blobPreview, setBlobPreview] = useState<string | null>(null);
     const [hasNewImage, setHasNewImage] = useState(false);
 
     const {
@@ -53,55 +50,15 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
         },
     });
 
-    useEffect(() => {
-        return () => {
-            if (blobPreview) URL.revokeObjectURL(blobPreview);
-        };
-    }, [blobPreview]);
-
     const handleClose = () => {
-        if (blobPreview) URL.revokeObjectURL(blobPreview);
-        setBlobPreview(null);
         setHasNewImage(false);
         reset();
         onClose();
     };
 
-    const { onChange: imageRegisterOnChange, ...imageFieldRest } = register('image');
-
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (blobPreview) URL.revokeObjectURL(blobPreview);
-        if (files && files.length > 0) {
-            setBlobPreview(URL.createObjectURL(files[0]));
-            setHasNewImage(true);
-        } else {
-            setBlobPreview(null);
-            setHasNewImage(false);
-        }
-        imageRegisterOnChange(e);
-    };
-
-    const previewSrc = blobPreview ?? product.image_url;
-
     const onSubmit = handleSubmit(async (data) => {
         try {
-            let imageUrl: string | undefined;
-
-            if (hasNewImage) {
-                const file = (data.image as FileList)[0];
-                const { path, publicUrl } = await productClientService.uploadProductImage(product.id, file);
-                await productClientService.deleteProductImagesExcept(product.id, path);
-                imageUrl = publicUrl;
-            }
-
-            await productClientService.updateProduct(product.id, {
-                name: data.name as string,
-                type: data.type as ProductType,
-                amount: data.amount as number,
-                currency: data.currency as string,
-                imageUrl,
-            });
+            await updateProduct(product.id, data, hasNewImage);
             handleClose();
             router.refresh();
         } catch (err) {
@@ -160,36 +117,13 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                         />
                     </div>
 
-                    <div>
-                        <Button
-                            component="label"
-                            variant="outlined"
-                            fullWidth
-                            color={errors.image ? 'error' : 'primary'}
-                        >
-                            {hasNewImage ? 'Change Image' : 'Replace Image'}
-                            <input
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                hidden
-                                {...imageFieldRest}
-                                onChange={handleImageChange}
-                            />
-                        </Button>
-                        {errors.image && (
-                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.image.message}</p>
-                        )}
-                        <div className={`mt-2 rounded border overflow-hidden ${errors.image ? 'border-red-300' : 'border-gray-200'}`}>
-                            <Image
-                                src={previewSrc}
-                                alt="Product preview"
-                                width={500}
-                                height={160}
-                                unoptimized={!!blobPreview}
-                                className="w-full h-40 object-contain bg-gray-50"
-                            />
-                        </div>
-                    </div>
+                    <ImageUpload
+                        registration={register('image')}
+                        error={errors.image?.message}
+                        fallbackSrc={product.image_url}
+                        uploadLabel="Replace Image"
+                        onFileChange={setHasNewImage}
+                    />
 
                     {errors.root && (
                         <p className="text-red-500 text-sm">{errors.root.message}</p>
@@ -200,12 +134,7 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                     <Button onClick={handleClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={isSubmitting}
-                        startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
-                    >
+                    <Button type="submit" variant="contained" loading={isSubmitting}>
                         {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </DialogActions>

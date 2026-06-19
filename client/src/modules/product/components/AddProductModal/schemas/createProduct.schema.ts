@@ -1,8 +1,13 @@
 import { object, string, number, mixed } from 'yup';
 import { ProductType } from '@modules/product/enums/ProductType';
-
-const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+import {
+    IMAGE_DIMENSIONS_MESSAGE,
+    IMAGE_FORMAT_MESSAGE,
+    IMAGE_SIZE_MESSAGE,
+    hasAllowedFormat,
+    hasAllowedSize,
+    hasMinimumDimensions,
+} from '@modules/product/utils/image';
 
 export const createProductSchema = object({
     name: string().required('Name is required'),
@@ -17,12 +22,7 @@ export const createProductSchema = object({
     image: mixed<FileList>()
         .required('Image is required')
         .test('hasFile', 'Image is required', (value) => value instanceof FileList && value.length > 0)
-        .test('fileFormat', 'Only JPEG, PNG and WebP images are allowed', (value) => {
-            if (!(value instanceof FileList) || value.length === 0) return true;
-            return ALLOWED_FORMATS.includes(value[0].type);
-        })
-        .test('fileSize', 'Image must be smaller than 5 MB', (value) => {
-            if (!(value instanceof FileList) || value.length === 0) return true;
-            return value[0].size <= MAX_FILE_SIZE;
-        }),
+        .test('fileFormat', IMAGE_FORMAT_MESSAGE, hasAllowedFormat)
+        .test('fileSize', IMAGE_SIZE_MESSAGE, hasAllowedSize)
+        .test('fileDimensions', IMAGE_DIMENSIONS_MESSAGE, hasMinimumDimensions),
 });

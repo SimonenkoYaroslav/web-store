@@ -9,7 +9,7 @@ interface IErrorProps {
 
 const t = en.errorPage
 
-export default function Error({ reset }: IErrorProps) {
+export default function ErrorPage({ reset }: IErrorProps) {
     return (
         <div className="flex min-h-dvh w-full items-center justify-center px-4">
             <div className="glass-panel brutal-shadow-lg max-w-md p-10 text-center">

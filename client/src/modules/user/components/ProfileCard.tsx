@@ -4,9 +4,9 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import { Avatar, Tooltip } from '@mui/material'
 import { useRouter } from 'next/navigation'
 
-import en from '@modules/user/locales/en'
 import { authService } from '@modules/auth/services'
 import { useUser } from '@modules/user'
+import en from '@modules/user/locales/en'
 
 interface IProps {
     isOpen: boolean

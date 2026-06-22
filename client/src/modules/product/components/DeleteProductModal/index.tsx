@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { FC, useTransition, useState } from 'react';
 
 import { Button } from '@components';
-import en from '@localisation/en';
+import en from '@modules/product/locales/en';
 
 interface IProps {
     open: boolean;

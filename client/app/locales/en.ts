@@ -5,11 +5,6 @@ const en = {
         description: "You don't have permission to view this page.",
         backLink: 'Back to catalog',
     },
-    errorPage: {
-        title: 'Something went wrong',
-        description: 'An unexpected error occurred. Please try again.',
-        retryButton: 'Try again',
-    },
     homePage: {
         metadata: {
             title: 'Web Store — Curated Goods, Delivered',

@@ -20,10 +20,10 @@ import { FC } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 
 import { ImageUpload } from '@components';
-import en from '@localisation/en';
 import { BillingInterval } from '@modules/product/enums/BillingInterval';
 import { Currency, CURRENCY_SYMBOL } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
+import en from '@modules/product/locales/en';
 import { ICreateProduct } from '@modules/product/types';
 
 import { createProductSchema } from './schemas/createProduct.schema';

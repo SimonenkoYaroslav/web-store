@@ -5,9 +5,10 @@ import SupportAgentOutlined from '@mui/icons-material/SupportAgentOutlined';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import en from '@localisation/en';
 import { SignOutButton } from '@modules/auth/components';
 import { userService } from '@modules/user/services';
+
+import en from './locales/en';
 
 const t = en.homePage;
 

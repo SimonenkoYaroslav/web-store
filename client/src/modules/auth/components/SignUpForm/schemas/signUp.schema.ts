@@ -1,6 +1,6 @@
 import { object, ref, string } from "yup";
 
-import en from "@localisation/en";
+import en from '@modules/auth/locales/en';
 
 const { validation } = en.signUpForm;
 

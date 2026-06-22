@@ -3,7 +3,7 @@
 import { FC, useState } from 'react';
 
 import { Button } from '@components';
-import en from '@localisation/en';
+import en from '@modules/product/locales/en';
 
 import { AddProductModal } from '../AddProductModal';
 

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import en from '@localisation/en'
+import en from '../../locales/en'
 
 const t = en.forbiddenPage
 

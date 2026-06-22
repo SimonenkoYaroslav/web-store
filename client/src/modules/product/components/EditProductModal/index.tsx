@@ -18,9 +18,9 @@ import { FC, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
 import { Button, ImageUpload } from '@components';
-import en from '@localisation/en';
 import { Currency, CURRENCY_SYMBOL } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
+import en from '@modules/product/locales/en';
 import { IProduct } from '@modules/product/types';
 
 import { editProductSchema } from './schemas/editProduct.schema';

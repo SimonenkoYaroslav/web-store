@@ -5,7 +5,8 @@ import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
 
 import { Button } from '@components';
-import en from '@localisation/en';
+
+import en from './locales/en';
 
 interface IImageUploadProps {
     registration: UseFormRegisterReturn;

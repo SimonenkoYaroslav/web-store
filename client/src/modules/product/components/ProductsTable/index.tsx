@@ -7,8 +7,8 @@ import Image from 'next/image';
 import { FC, useState } from 'react';
 
 import { DataTable, IColumn } from '@components';
-import en from '@localisation/en';
 import { ProductType } from '@modules/product/enums/ProductType';
+import en from '@modules/product/locales/en';
 import { IProduct } from '@modules/product/types';
 import { formatDate } from '@modules/product/utils/formatDate';
 

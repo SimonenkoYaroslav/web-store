@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { FC } from 'react';
 
-import en from '@localisation/en';
+import en from '@modules/catalog/locales/en';
 import { useRealtimeProducts, ProductType } from '@modules/product';
 import { IProduct } from '@modules/product/types';
 

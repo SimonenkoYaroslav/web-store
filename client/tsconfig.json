@@ -62,6 +62,9 @@
       "@core/*": [
         "./src/core/*"
       ],
+      "@localisation/*": [
+        "./src/localisation/*"
+      ],
     },
     "typeRoots": [
       "./types",

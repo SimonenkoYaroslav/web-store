@@ -8,12 +8,15 @@ import { FC, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@components";
+import en from "@localisation/en";
 import { authService } from "@modules/auth/services";
 import { ISignUp } from "@modules/auth/types/auth.types";
 
 import { signUpSchema } from "./schemas/signUp.schema";
 
 type SignUpFormValues = ISignUp & { confirmPassword: string };
+
+const t = en.signUpForm;
 
 export const SignUpForm: FC = () => {
     const router = useRouter();
@@ -35,20 +38,24 @@ export const SignUpForm: FC = () => {
             // user to sign in once they have confirmed. Otherwise log them straight in.
             router.push(data.session ? '/catalog' : '/login');
         } catch (error) {
-            setServerError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+            setServerError(error instanceof Error ? error.message : t.serverError);
         }
     });
 
     return (
-        <div className="flex justify-center items-center h-screen">
+        <div className="flex justify-center items-center min-h-dvh px-4 py-10">
             <Box
                 component="form"
                 onSubmit={onSubmit}
-                className="flex p-7 flex-col gap-4 bg-white"
+                className="glass-panel brutal-shadow-lg flex w-full max-w-sm flex-col gap-4 p-8"
                 noValidate
                 autoComplete="off"
             >
-                <h2 className="mb-4 text-black text-[32px] font-bold">Sign Up</h2>
+                <div className="mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-700">{t.brandLabel}</p>
+                    <h2 className="font-serif text-4xl font-bold text-brand-900">{t.title}</h2>
+                    <p className="mt-1 text-sm text-brand-600">{t.subtitle}</p>
+                </div>
 
                 {serverError && <Alert severity="error">{serverError}</Alert>}
 
@@ -56,60 +63,60 @@ export const SignUpForm: FC = () => {
                     error={!!errors.firstName?.message}
                     helperText={errors.firstName?.message}
                     {...register('firstName')}
-                    className="rounded-none"
                     autoComplete="off"
                     required
-                    label="First name"
+                    label={t.firstNameLabel}
+                    fullWidth
                 />
 
                 <TextField
                     error={!!errors.lastName?.message}
                     helperText={errors.lastName?.message}
                     {...register('lastName')}
-                    className="rounded-none"
                     autoComplete="off"
                     required
-                    label="Last name"
+                    label={t.lastNameLabel}
+                    fullWidth
                 />
 
                 <TextField
                     error={!!errors.email?.message}
                     helperText={errors.email?.message}
                     {...register('email')}
-                    className="rounded-none"
                     autoComplete="off"
                     required
                     type="email"
-                    label="Email"
+                    label={t.emailLabel}
+                    fullWidth
                 />
 
                 <TextField
                     error={!!errors.password?.message}
                     helperText={errors.password?.message}
                     {...register('password')}
-                    className="rounded-none"
                     autoComplete="off"
                     required
                     type="password"
-                    label="Password"
+                    label={t.passwordLabel}
+                    fullWidth
                 />
 
                 <TextField
                     error={!!errors.confirmPassword?.message}
                     helperText={errors.confirmPassword?.message}
                     {...register('confirmPassword')}
-                    className="rounded-none"
                     autoComplete="off"
                     required
                     type="password"
-                    label="Confirm password"
+                    label={t.confirmPasswordLabel}
+                    fullWidth
                 />
 
-                <Button type="submit" loading={isSubmitting} variant="contained">Sign up</Button>
+                <Button type="submit" loading={isSubmitting} variant="contained" size="large">{t.submitButton}</Button>
 
-                <p className="text-sm text-black">
-                    Already have an account?{' '}
-                    <Link className="text-blue-600 underline" href="/login">Sign in</Link>
+                <p className="text-sm text-brand-600">
+                    {t.hasAccount}{' '}
+                    <Link className="font-semibold text-gold-700 underline-offset-2 hover:underline" href="/login">{t.signInLink}</Link>
                 </p>
             </Box>
         </div>

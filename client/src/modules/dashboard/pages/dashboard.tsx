@@ -1,18 +1,24 @@
 import { Suspense } from 'react';
 
+import en from '@modules/dashboard/locales/en';
 import { ProductsTable, AddProductButton } from '@modules/product/components';
 import productServerService from '@modules/product/services/product.server.service';
+
+const t = en.dashboardPage;
 
 export default async function DashboardPage() {
     const products = await productServerService.fetchProducts();
 
     return (
-        <div className="w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Products</h1>
+        <div className="w-full p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-700">{t.sectionLabel}</p>
+                    <h1 className="font-serif text-3xl md:text-4xl font-semibold text-brand-900">{t.title}</h1>
+                </div>
                 <AddProductButton />
             </div>
-            <Suspense fallback={<p>Loading posts...</p>}>
+            <Suspense fallback={<p className="text-brand-500">{t.loading}</p>}>
                 <ProductsTable products={products} />
             </Suspense>
         </div>

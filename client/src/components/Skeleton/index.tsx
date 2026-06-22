@@ -21,7 +21,7 @@ const RADIUS_CLASS: Record<SkeletonRadius, string> = {
  * content being loaded; size and spacing come from `className`.
  */
 const Skeleton: FC<ISkeletonProps> = ({ className = '', radius = 'sm' }) => (
-    <div aria-hidden className={`bg-gray-200 animate-pulse ${RADIUS_CLASS[radius]} ${className}`} />
+    <div aria-hidden className={`bg-brand-100 animate-pulse ${RADIUS_CLASS[radius]} ${className}`} />
 );
 
 export default Skeleton;

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { FC, useTransition, useState } from 'react';
 
 import { Button } from '@components';
+import en from '@localisation/en';
 
 interface IProps {
     open: boolean;
@@ -18,7 +19,9 @@ interface IProps {
     onClose: () => void;
 }
 
-export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, onClose }) => {
+const t = en.deleteProductModal;
+
+export const DeleteProductModal: FC<IProps> = ({ open, productId: _productId, productName, onClose }) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +32,7 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, o
                 onClose();
                 router.refresh();
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'Something went wrong');
+                setError(err instanceof Error ? err.message : t.serverError);
             }
         });
     };
@@ -41,18 +44,18 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, o
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-            <DialogTitle>Delete Product</DialogTitle>
+            <DialogTitle>{t.title}</DialogTitle>
             <DialogContent>
-                <p className="text-gray-700">
-                    Are you sure you want to delete{' '}
-                    <span className="font-semibold">&ldquo;{productName}&rdquo;</span>?
-                    This action cannot be undone.
+                <p className="text-brand-700">
+                    {t.confirmPrefix}{' '}
+                    <span className="font-semibold">&ldquo;{productName}&rdquo;</span>?{' '}
+                    {t.cannotUndo}
                 </p>
                 {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
             </DialogContent>
             <DialogActions className="px-6 pb-4">
                 <Button onClick={handleClose} disabled={isPending}>
-                    Cancel
+                    {t.cancelButton}
                 </Button>
                 <Button
                     variant="contained"
@@ -60,7 +63,7 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, o
                     loading={isPending}
                     onClick={handleDelete}
                 >
-                    {isPending ? 'Deleting...' : 'Delete'}
+                    {isPending ? t.submittingLabel : t.submitButton}
                 </Button>
             </DialogActions>
         </Dialog>

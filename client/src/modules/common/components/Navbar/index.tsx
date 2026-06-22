@@ -15,7 +15,7 @@ const Navbar = () => {
     const items = filterNavItemsByAccess(user?.role)
 
     return (
-        <nav className={`bg-gray-900 border-r border-gray-800 min-h-screen flex flex-col shrink-0 overflow-hidden transition-[width] duration-200 ${isOpen ? 'w-56' : 'w-14'}`}>
+        <nav className={`bg-brand-950 border-r-4 border-brand-900 min-h-screen flex flex-col shrink-0 overflow-hidden transition-[width] duration-200 ${isOpen ? 'w-56' : 'w-14'}`}>
             <NavbarHeader isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)} />
             <NavbarMenu isOpen={isOpen} items={items} />
             <ProfileCard isOpen={isOpen} />

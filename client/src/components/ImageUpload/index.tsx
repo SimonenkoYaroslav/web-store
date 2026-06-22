@@ -5,6 +5,7 @@ import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
 
 import { Button } from '@components';
+import en from '@localisation/en';
 
 interface IImageUploadProps {
     registration: UseFormRegisterReturn;
@@ -14,6 +15,8 @@ interface IImageUploadProps {
     changeLabel?: string;
     onFileChange?: (hasFile: boolean) => void;
 }
+
+const t = en.imageUpload;
 
 /**
  * Shared image upload field for react-hook-form.
@@ -28,8 +31,8 @@ const ImageUpload: FC<IImageUploadProps> = ({
     registration,
     error,
     fallbackSrc = null,
-    uploadLabel = 'Upload Image',
-    changeLabel = 'Change Image',
+    uploadLabel = t.uploadLabel,
+    changeLabel = t.changeLabel,
     onFileChange,
 }) => {
     const [preview, setPreview] = useState<string | null>(null);
@@ -75,14 +78,14 @@ const ImageUpload: FC<IImageUploadProps> = ({
                 <p className="text-red-500 text-xs mt-1 ml-1">{error}</p>
             )}
             {previewSrc && (
-                <div className={`mt-2 rounded border overflow-hidden ${error ? 'border-red-300' : 'border-gray-200'}`}>
+                <div className={`mt-2 rounded-lg border overflow-hidden ${error ? 'border-red-300' : 'border-brand-200'}`}>
                     <Image
                         src={previewSrc}
-                        alt="Preview"
+                        alt={t.previewAlt}
                         width={500}
                         height={160}
                         unoptimized={!!preview}
-                        className="w-full h-40 object-contain bg-gray-50"
+                        className="w-full h-40 object-contain bg-brand-50"
                     />
                 </div>
             )}

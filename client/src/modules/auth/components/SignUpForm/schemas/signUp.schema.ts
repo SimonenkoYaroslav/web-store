@@ -1,13 +1,17 @@
 import { object, ref, string } from "yup";
 
+import en from "@localisation/en";
+
+const { validation } = en.signUpForm;
+
 export const signUpSchema = object({
-    firstName: string().trim().required("First name is required"),
-    lastName: string().trim().required("Last name is required"),
-    email: string().email("Invalid email format").required("Email is required"),
+    firstName: string().trim().required(validation.firstNameRequired),
+    lastName: string().trim().required(validation.lastNameRequired),
+    email: string().email(validation.emailInvalid).required(validation.emailRequired),
     password: string()
-        .min(8, "Password must be at least 8 characters")
-        .required("Password is required"),
+        .min(8, validation.passwordMin)
+        .required(validation.passwordRequired),
     confirmPassword: string()
-        .oneOf([ref("password")], "Passwords must match")
-        .required("Please confirm your password"),
+        .oneOf([ref("password")], validation.passwordsMatch)
+        .required(validation.confirmPasswordRequired),
 })

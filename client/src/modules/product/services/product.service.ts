@@ -1,36 +1,22 @@
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+
 import { createClient } from '@utils/supabase/client';
 
 import { BUCKET_ID } from '../../../../constants/storage';
+import { productDao } from '../dao';
 import { ICreateProduct, IProduct, IUpdateProduct } from '../types';
 
 class ProductService {
     async createProduct(data: Omit<ICreateProduct, 'image'>): Promise<IProduct> {
         const supabase = createClient();
 
-        const { error, data: createdProduct } = await supabase.from('products').insert({
-            name: data.name,
-            type: data.type,
-            amount: data.amount,
-            currency: data.currency,
-        }).select<"*", IProduct>("*").single();
-
-        if (error) {throw new Error(error.message);}
-
-        return createdProduct;
+        return productDao.insert(supabase, data);
     }
 
     async updateProduct(productId: string, data: IUpdateProduct): Promise<void> {
         const supabase = createClient();
 
-        const { error } = await supabase.from('products').update({
-            name: data.name,
-            type: data.type,
-            amount: data.amount,
-            currency: data.currency,
-            ...(data.imageUrl && { image_url: data.imageUrl }),
-        }).eq('id', productId);
-
-        if (error) {throw new Error(error.message);}
+        await productDao.update(supabase, productId, data);
     }
 
     async deleteProduct(productId: string): Promise<void> {
@@ -58,11 +44,31 @@ class ProductService {
             }
         }
 
-        const { error } = await supabase.from('products').delete().eq('id', productId);
+        await productDao.delete(supabase, productId);
+    }
 
-        if (error) {
-            throw new Error(error.message);
-        }
+    // Subscribes to live row changes on the products table via Supabase Realtime
+    // and returns an unsubscribe function. Listening to every event (not just
+    // INSERT) is required because product creation is multi-step — the row is
+    // inserted with an empty image_url, then UPDATEd once the image upload and
+    // any Stripe provisioning finish — so consumers stay in sync as the row
+    // settles. Delivery is still bounded by the table's RLS select policy.
+    //
+    // The table must belong to the supabase_realtime publication for events to
+    // arrive (see the 20260622130000_products_realtime.sql migration).
+    subscribeToChanges(
+        onChange: (payload: RealtimePostgresChangesPayload<IProduct>) => void,
+    ): () => void {
+        const supabase = createClient();
+
+        const channel = supabase
+            .channel('public:products')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, onChange)
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }
 }
 

@@ -3,8 +3,11 @@
 import { FC, useState } from 'react';
 
 import { Button } from '@components';
+import en from '@localisation/en';
 
 import { AddProductModal } from '../AddProductModal';
+
+const t = en.addProductButton;
 
 export const AddProductButton: FC = () => {
     const [open, setOpen] = useState(false);
@@ -12,7 +15,7 @@ export const AddProductButton: FC = () => {
     return (
         <>
             <Button variant="contained" onClick={() => setOpen(true)}>
-                Add Product
+                {t.label}
             </Button>
             <AddProductModal open={open} onClose={() => setOpen(false)} />
         </>

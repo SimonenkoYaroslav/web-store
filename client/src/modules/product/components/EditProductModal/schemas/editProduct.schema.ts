@@ -1,5 +1,6 @@
 import { object, string, number, mixed } from 'yup';
 
+import { Currency } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
 import {
     IMAGE_DIMENSIONS_MESSAGE,
@@ -19,7 +20,9 @@ export const editProductSchema = object({
         .typeError('Amount must be a number')
         .required('Amount is required')
         .min(0, 'Amount must be non-negative'),
-    currency: string().required('Currency is required'),
+    currency: mixed<Currency>()
+        .oneOf(Object.values(Currency), 'Invalid currency')
+        .required('Currency is required'),
     image: mixed<FileList>()
         .optional()
         .test('fileFormat', IMAGE_FORMAT_MESSAGE, hasAllowedFormat)

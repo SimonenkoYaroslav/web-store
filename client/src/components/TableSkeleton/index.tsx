@@ -24,9 +24,12 @@ interface ITableSkeletonProps {
  * column count the table will render.
  */
 const TableSkeleton: FC<ITableSkeletonProps> = ({ columns, rows = 5 }) => (
-    <TableContainer component={Paper} className="rounded-lg overflow-hidden shadow">
+    <TableContainer
+        component={Paper}
+        className="rounded-xl overflow-hidden border border-brand-200/60 shadow-lg shadow-brand-900/5"
+    >
         <Table>
-            <TableHead className="bg-gray-100">
+            <TableHead>
                 <TableRow>
                     {Array.from({ length: columns }).map((_, index) => (
                         <TableCell key={`head-${index}`}>

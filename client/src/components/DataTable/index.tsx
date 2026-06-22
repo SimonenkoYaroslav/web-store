@@ -32,19 +32,25 @@ interface IDataTableProps<T> {
  */
 function DataTable<T>({ columns, rows, getRowKey, emptyMessage = 'No data found.' }: IDataTableProps<T>) {
     if (rows.length === 0) {
-        return <p className="text-center text-gray-500 py-8">{emptyMessage}</p>;
+        return (
+            <div className="glass-panel py-12 text-center uppercase tracking-wider text-brand-600">
+                {emptyMessage}
+            </div>
+        );
     }
 
     return (
-        <TableContainer component={Paper} className="rounded-lg overflow-hidden shadow">
+        <TableContainer
+            component={Paper}
+            className="overflow-hidden border-2 border-brand-950 brutal-shadow"
+        >
             <Table>
-                <TableHead className="bg-gray-100">
+                <TableHead>
                     <TableRow>
                         {columns.map((column) => (
                             <TableCell
                                 key={column.key}
                                 align={column.align}
-                                className="font-semibold text-gray-800"
                             >
                                 {column.header}
                             </TableCell>
@@ -53,7 +59,7 @@ function DataTable<T>({ columns, rows, getRowKey, emptyMessage = 'No data found.
                 </TableHead>
                 <TableBody>
                     {rows.map((row) => (
-                        <TableRow key={getRowKey(row)} className="hover:bg-gray-50">
+                        <TableRow key={getRowKey(row)} className="transition-colors hover:bg-brand-50/70">
                             {columns.map((column) => (
                                 <TableCell key={column.key} align={column.align}>
                                     {column.cell(row)}

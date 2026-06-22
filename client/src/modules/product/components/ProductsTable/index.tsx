@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { FC, useState } from 'react';
 
 import { DataTable, IColumn } from '@components';
+import en from '@localisation/en';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { IProduct } from '@modules/product/types';
 import { formatDate } from '@modules/product/utils/formatDate';
@@ -18,6 +19,8 @@ interface IProps {
     products: IProduct[];
 }
 
+const t = en.productsTable;
+
 export const ProductsTable: FC<IProps> = ({ products }) => {
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
     const [deletingProduct, setDeletingProduct] = useState<IProduct | null>(null);
@@ -25,7 +28,7 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
     const columns: IColumn<IProduct>[] = [
         {
             key: 'image',
-            header: 'Image',
+            header: t.columns.image,
             cell: (product) => (
                 <Image
                     src={product.image_url}
@@ -38,12 +41,12 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
         },
         {
             key: 'name',
-            header: 'Name',
+            header: t.columns.name,
             cell: (product) => product.name,
         },
         {
             key: 'type',
-            header: 'Type',
+            header: t.columns.type,
             cell: (product) => (
                 <Chip
                     label={product.type}
@@ -54,12 +57,12 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
         },
         {
             key: 'price',
-            header: 'Price',
+            header: t.columns.price,
             cell: (product) => `${product.amount} ${product.currency}`,
         },
         {
             key: 'created_at',
-            header: 'Created At',
+            header: t.columns.createdAt,
             cell: (product) => formatDate(product.created_at),
         },
         {
@@ -70,7 +73,7 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
                 <>
                     <IconButton
                         size="small"
-                        aria-label="edit product"
+                        aria-label={t.ariaLabels.editProduct}
                         onClick={() => setEditingProduct(product)}
                     >
                         <EditIcon fontSize="small" />
@@ -78,7 +81,7 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
                     <IconButton
                         size="small"
                         color="error"
-                        aria-label="delete product"
+                        aria-label={t.ariaLabels.deleteProduct}
                         onClick={() => setDeletingProduct(product)}
                     >
                         <DeleteIcon fontSize="small" />
@@ -94,7 +97,7 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
                 columns={columns}
                 rows={products}
                 getRowKey={(product) => product.id}
-                emptyMessage="No products found."
+                emptyMessage={t.emptyMessage}
             />
 
             {editingProduct && (

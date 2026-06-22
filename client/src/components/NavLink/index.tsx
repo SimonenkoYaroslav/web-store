@@ -11,18 +11,18 @@ interface INavLinkProps extends LinkProps, Omit<AnchorHTMLAttributes<HTMLAnchorE
     variant?: NavLinkVariant;
 }
 
-const BASE_CLASS = 'flex items-center rounded-lg transition-colors duration-150';
+const BASE_CLASS = 'flex items-center uppercase tracking-wider transition-colors duration-150';
 
 const VARIANT_CLASS: Record<NavLinkVariant, string> = {
-    full: 'px-3 py-2 text-sm font-medium whitespace-nowrap',
+    full: 'px-3 py-2 text-sm font-semibold whitespace-nowrap',
     icon: 'w-8 h-8 justify-center',
 };
 
-const INACTIVE_CLASS = 'text-gray-400 hover:bg-gray-700 hover:text-white';
+const INACTIVE_CLASS = 'text-brand-200 border-2 border-transparent hover:bg-brand-800 hover:text-white';
 
 const ACTIVE_CLASS: Record<NavLinkVariant, string> = {
-    full: 'bg-indigo-600 text-white shadow-sm',
-    icon: 'bg-indigo-600 text-white',
+    full: 'bg-gold-400 text-brand-950 font-bold border-2 border-gold-200',
+    icon: 'bg-gold-400 text-brand-950 border-2 border-gold-200',
 };
 
 /**

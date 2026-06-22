@@ -23,8 +23,8 @@ const Loading: FC<ILoadingProps> = ({ label, fullScreen = false }) => (
             fullScreen ? 'min-h-screen' : 'w-full min-h-60 py-12'
         }`}
     >
-        <CircularProgress />
-        {label && <p className="text-sm text-gray-500">{label}</p>}
+        <CircularProgress color="secondary" />
+        {label && <p className="text-sm text-brand-500">{label}</p>}
         <span className="sr-only">{label ?? 'Loading'}</span>
     </div>
 );

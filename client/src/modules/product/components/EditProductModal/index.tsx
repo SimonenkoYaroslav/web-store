@@ -18,6 +18,8 @@ import { FC, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
 import { Button, ImageUpload } from '@components';
+import en from '@localisation/en';
+import { Currency, CURRENCY_SYMBOL } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { IProduct } from '@modules/product/types';
 
@@ -29,6 +31,8 @@ interface IProps {
     product: IProduct;
     onClose: () => void;
 }
+
+const t = en.editProductModal;
 
 export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
     const router = useRouter();
@@ -64,18 +68,18 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
             handleClose();
             router.refresh();
         } catch (err) {
-            setError('root', { message: err instanceof Error ? err.message : 'Something went wrong' });
+            setError('root', { message: err instanceof Error ? err.message : t.serverError });
         }
     });
 
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>{t.title}</DialogTitle>
             <form onSubmit={onSubmit}>
                 <DialogContent className="flex flex-col gap-4">
                     <TextField
                         {...register('name')}
-                        label="Name"
+                        label={t.nameLabel}
                         fullWidth
                         size="small"
                         error={!!errors.name}
@@ -87,10 +91,10 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                         control={control}
                         render={({ field, fieldState: { error } }) => (
                             <FormControl fullWidth size="small" error={!!error}>
-                                <InputLabel>Type</InputLabel>
-                                <Select {...field} label="Type" value={field.value ?? ''}>
-                                    {Object.values(ProductType).map((t) => (
-                                        <MenuItem key={t} value={t}>{t}</MenuItem>
+                                <InputLabel>{t.typeLabel}</InputLabel>
+                                <Select {...field} label={t.typeLabel} value={field.value ?? ''}>
+                                    {Object.values(ProductType).map((type) => (
+                                        <MenuItem key={type} value={type}>{type}</MenuItem>
                                     ))}
                                 </Select>
                                 {error && <FormHelperText>{error.message}</FormHelperText>}
@@ -101,21 +105,29 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                     <div className="flex gap-3">
                         <TextField
                             {...register('amount')}
-                            label="Amount"
+                            label={t.amountLabel}
                             type="number"
                             size="small"
                             error={!!errors.amount}
                             helperText={errors.amount?.message}
                             className="flex-1"
                         />
-                        <TextField
-                            {...register('currency')}
-                            label="Currency"
-                            size="small"
-                            error={!!errors.currency}
-                            helperText={errors.currency?.message}
-                            slotProps={{ htmlInput: { style: { textTransform: 'uppercase' as const } } }}
-                            className="w-28"
+                        <Controller
+                            name="currency"
+                            control={control}
+                            render={({ field, fieldState: { error } }) => (
+                                <FormControl size="small" error={!!error} className="w-32">
+                                    <InputLabel>{t.currencyLabel}</InputLabel>
+                                    <Select {...field} label={t.currencyLabel} value={field.value ?? ''}>
+                                        {Object.values(Currency).map((currency) => (
+                                            <MenuItem key={currency} value={currency}>
+                                                {CURRENCY_SYMBOL[currency]} {currency}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                    {error && <FormHelperText>{error.message}</FormHelperText>}
+                                </FormControl>
+                            )}
                         />
                     </div>
 
@@ -123,7 +135,7 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                         registration={register('image')}
                         error={errors.image?.message}
                         fallbackSrc={product.image_url}
-                        uploadLabel="Replace Image"
+                        uploadLabel={t.replaceImageLabel}
                         onFileChange={setHasNewImage}
                     />
 
@@ -134,10 +146,10 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
 
                 <DialogActions className="px-6 pb-4">
                     <Button onClick={handleClose} disabled={isSubmitting}>
-                        Cancel
+                        {t.cancelButton}
                     </Button>
                     <Button type="submit" variant="contained" loading={isSubmitting}>
-                        {isSubmitting ? 'Saving...' : 'Save Changes'}
+                        {isSubmitting ? t.submittingLabel : t.submitButton}
                     </Button>
                 </DialogActions>
             </form>

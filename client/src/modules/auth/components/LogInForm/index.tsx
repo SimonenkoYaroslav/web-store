@@ -7,10 +7,12 @@ import { FC, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@components";
+import en from "@localisation/en";
 import { authService } from "@modules/auth/services";
-import { UserRole } from "@modules/user/enums/UserRole";
 
 import { signInSchema } from "./schemas/signIn.schema";
+
+const t = en.logInForm;
 
 export const LogInForm: FC = () => {
     const [serverError, setServerError] = useState<string | null>(null);
@@ -29,51 +31,57 @@ export const LogInForm: FC = () => {
 
             window.location.assign('/catalog')
         } catch (error) {
-            setServerError(error instanceof Error ? error.message : 'Unable to sign in. Please try again.');
+            setServerError(error instanceof Error ? error.message : t.serverError);
         }
     })
 
     return (
-        <div className="flex justify-center items-center h-screen">
+        <div className="flex justify-center items-center min-h-dvh px-4 py-10">
             <Box
                 component="form"
                 onSubmit={onSubmit}
-                className="flex p-7 flex-col gap-4 bg-white"
+                className="glass-panel brutal-shadow-lg flex w-full max-w-sm flex-col gap-4 p-8"
                 noValidate
                 autoComplete="off"
             >
-                <h2 className="mb-4 text-black text-[32px] font-bold">Sign In</h2>
+                <div className="mb-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-700">{t.brandLabel}</p>
+                    <h2 className="font-serif text-4xl font-bold text-brand-900">{t.title}</h2>
+                    <p className="mt-1 text-sm text-brand-600">{t.subtitle}</p>
+                </div>
 
                 {serverError && <Alert severity="error">{serverError}</Alert>}
 
                 <TextField
                     error={!!errors.email?.message}
                     {...register('email')}
-                    className="rounded-none"
                     autoComplete="off"
                     helperText={errors.email?.message}
                     required
                     id="outlined-required"
-                    label="Email"
+                    label={t.emailLabel}
+                    fullWidth
                 />
 
                 <TextField
                     error={!!errors.password?.message}
-                    className="rounded-none"
                     autoComplete="off"
                     {...register('password')}
                     id="outlined-password-input"
-                    label="Password"
+                    label={t.passwordLabel}
                     type="password"
+                    helperText={errors.password?.message}
+                    fullWidth
                 />
 
-                <Button type="submit" loading={isSubmitting} variant="contained">Sign in</Button>
+                <Button type="submit" loading={isSubmitting} variant="contained" size="large">{t.submitButton}</Button>
 
-                <p className="text-sm text-black">
-                    Don&apos;t have an account?{' '}
-                    <Link className="text-blue-600 underline" href="/register">Sign up</Link>
+                <p className="text-sm text-brand-600">
+                    {t.noAccount}{' '}
+                    <Link className="font-semibold text-gold-700 underline-offset-2 hover:underline" href="/register">{t.signUpLink}</Link>
                 </p>
-            </Box></div >
+            </Box>
+        </div>
     )
 }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@components'
+import { Button } from '@common/components'
 import en from '@modules/common/locales/en'
 
 interface IErrorProps {

@@ -1,8 +1,7 @@
 import type Stripe from 'stripe';
 
-import { stripe } from '@core/stripe/server';
-
-import { BillingInterval } from '../enums/BillingInterval';
+import { stripe } from '@core/paymentSystem/stripe/server';
+import { BillingInterval } from '@modules/product/enums/BillingInterval';
 
 interface ICreateSubscriptionProductParams {
     name: string;

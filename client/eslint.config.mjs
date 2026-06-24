@@ -30,7 +30,7 @@ const eslintConfig = defineConfig([
       // import/order groups them after third-party packages, as the old alias
       // resolver did.
       "import/internal-regex":
-        "^@(modules|common|components|auth|user|catalog|core|utils|config|static)(/|$)",
+        "^@(modules|common|components|auth|user|catalog|core|utils|config|static|localisation|constants|app)(/|$)",
     },
     rules: {
       // Use the TypeScript-aware unused-vars rule (the core one misfires on types).
@@ -74,6 +74,23 @@ const eslintConfig = defineConfig([
           selector: "interface",
           format: ["PascalCase"],
           custom: { regex: "^I[A-Z]", match: true },
+        },
+      ],
+
+      // Forbid relative parent imports (`../`) so cross-directory imports use the
+      // tsconfig path aliases (@modules, @core, @constants, ...) instead. Matches on the
+      // import string, so same-directory (`./`) imports — barrels and co-located files —
+      // and the aliases themselves are left alone.
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^\\.\\.",
+              message:
+                "Relative parent imports ('../') are not allowed — use a path alias (@modules, @core, @constants, ...) instead.",
+            },
+          ],
         },
       ],
 

@@ -1,4 +1,4 @@
-import { AccessType } from "../enums/AccessType";
+import { AccessType } from "@auth/enums/AccessType";
 
 const normalizeUserAccess = (access?: AccessType | AccessType[]): AccessType[] => {
     if (!access) {

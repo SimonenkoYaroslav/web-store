@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { FC, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { Button } from "@components";
+import { Button } from "@common/components";
 import en from '@modules/auth/locales/en';
 import { authService } from "@modules/auth/services";
 import { ISignUp } from "@modules/auth/types/auth.types";

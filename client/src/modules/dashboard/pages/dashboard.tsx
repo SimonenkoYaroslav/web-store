@@ -2,12 +2,12 @@ import { Suspense } from 'react';
 
 import en from '@modules/dashboard/locales/en';
 import { ProductsTable, AddProductButton } from '@modules/product/components';
-import productServerService from '@modules/product/services/product.server.service';
+import getProductService from '@modules/product/services/get-product.service';
 
 const t = en.dashboardPage;
 
 export default async function DashboardPage() {
-    const products = await productServerService.fetchProducts();
+    const products = await getProductService.fetchProducts();
 
     return (
         <div className="w-full p-6 md:p-8">

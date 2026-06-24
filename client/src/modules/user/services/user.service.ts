@@ -1,6 +1,6 @@
+import { createClient } from '@core/clients/supabase/server';
 import { userDao } from '@modules/user/dao';
 import { IUser } from '@modules/user/types/user';
-import { createClient } from '@utils/supabase/server';
 
 class UserService {
     async fetchCurrentUser(): Promise<IUser | null> {
@@ -11,7 +11,7 @@ class UserService {
             return null;
         }
 
-        return userDao.findById(supabase, user.id);
+        return userDao.findById(user.id);
     };
 }
 

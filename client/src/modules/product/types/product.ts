@@ -1,6 +1,6 @@
-import { BillingInterval } from '../enums/BillingInterval';
-import { Currency } from '../enums/Currency';
-import { ProductType } from '../enums/ProductType';
+import { BillingInterval } from '@modules/product/enums/BillingInterval';
+import { Currency } from '@modules/product/enums/Currency';
+import { ProductType } from '@modules/product/enums/ProductType';
 
 export interface IProduct {
     id: string;

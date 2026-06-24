@@ -2,10 +2,9 @@
 
 import { FC, useState } from 'react';
 
-import { Button } from '@components';
+import { Button } from '@common/components';
+import { AddProductModal } from '@modules/product/components/AddProductModal';
 import en from '@modules/product/locales/en';
-
-import { AddProductModal } from '../AddProductModal';
 
 const t = en.addProductButton;
 

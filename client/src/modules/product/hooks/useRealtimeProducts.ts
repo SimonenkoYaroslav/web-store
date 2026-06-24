@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { productService } from '../services';
-import { IProduct } from '../types';
+import { productService } from '@modules/product/services';
+import { IProduct } from '@modules/product/types';
 
 // Keeps a products list in sync with the database in real time. Seed it with
 // the server-rendered list (so the first paint has data and SEO/SSR still

@@ -1,12 +1,11 @@
+import { CatalogProducts } from '@catalog/components';
 import en from '@modules/catalog/locales/en';
-import productServerService from '@modules/product/services/product.server.service';
-
-import { CatalogProducts } from '../components';
+import getProductService from '@modules/product/services/get-product.service';
 
 const t = en.catalogPage;
 
 export default async function CatalogPage() {
-    const products = await productServerService.fetchProducts();
+    const products = await getProductService.fetchProducts();
 
     return (
         <div className="w-full p-6 md:p-8">

@@ -2,7 +2,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
 import type { Metadata } from "next";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 
-import ThemeRegistry from '@core/theme/ThemeRegistry';
+import ThemeRegistry from '@modules/common/theme/ThemeRegistry';
 import { GradientBackground } from '@modules/common/components';
 import { UserContextProvider } from '@modules/user';
 import { userService } from '@modules/user/services';

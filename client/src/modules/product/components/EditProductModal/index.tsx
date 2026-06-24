@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { FC, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
-import { Button, ImageUpload } from '@components';
+import { Button, ImageUpload } from '@common/components';
 import { Currency, CURRENCY_SYMBOL } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
 import en from '@modules/product/locales/en';

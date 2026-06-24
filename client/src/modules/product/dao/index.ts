@@ -1,1 +1,2 @@
-export { default as productDao } from './product.dao';
+export { default as productClientDao } from './product.dao';
+export { default as productServerDao } from './product.server.dao'

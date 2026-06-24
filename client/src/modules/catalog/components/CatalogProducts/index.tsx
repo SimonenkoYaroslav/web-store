@@ -14,9 +14,9 @@ interface IProps {
 const t = en.catalogProducts;
 
 export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
-    const products = useRealtimeProducts(initialProducts);
+    // const products = useRealtimeProducts(initialProducts);
 
-    if (products.length === 0) {
+    if (initialProducts.length === 0) {
         return (
             <div className="glass-panel mt-8 py-12 text-center uppercase tracking-wider text-brand-600">
                 {t.noProducts}
@@ -26,7 +26,7 @@ export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
 
     return (
         <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => (
+            {initialProducts.map((product) => (
                 <li key={product.id} className="glass-panel flex flex-col overflow-hidden">
                     <div className="relative aspect-square bg-sand-100">
                         {product.image_url ? (

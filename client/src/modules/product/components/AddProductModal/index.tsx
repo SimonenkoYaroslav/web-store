@@ -19,15 +19,15 @@ import { useRouter } from 'next/navigation';
 import { FC } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 
-import { ImageUpload } from '@components';
+import { ImageUpload } from '@common/components';
 import { BillingInterval } from '@modules/product/enums/BillingInterval';
 import { Currency, CURRENCY_SYMBOL } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
 import en from '@modules/product/locales/en';
+import { productService } from '@modules/product/services';
 import { ICreateProduct } from '@modules/product/types';
 
 import { createProductSchema } from './schemas/createProduct.schema';
-import { createProduct } from './utils/createProduct';
 
 interface IProps {
     open: boolean;
@@ -57,7 +57,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
 
     const onSubmit = handleSubmit(async (data: ICreateProduct) => {
         try {
-            await createProduct(data);
+            await productService.createProduct(data);
             handleClose();
             router.refresh();
         } catch (err) {

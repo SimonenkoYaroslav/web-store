@@ -35,15 +35,6 @@
       "@common/*": [
         "./src/modules/common/*"
       ],
-      "@components": [
-        "./src/components"
-      ],
-      "@components/*": [
-        "./src/components/*"
-      ],
-      "@config": [
-        "./src/config"
-      ],
       "@static": [
         "./static"
       ],
@@ -63,8 +54,14 @@
         "./src/core/*"
       ],
       "@localisation/*": [
-        "./src/localisation/*"
+        "./src/core/localisation/*"
       ],
+      "@constants/*": [
+        "./constants/*"
+      ],
+      "@app/*": [
+        "./app/*"
+      ]
     },
     "typeRoots": [
       "./types",

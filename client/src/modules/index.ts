@@ -1,6 +1,6 @@
-import imageUpload from '@components/ImageUpload/locales/en';
 import auth from '@modules/auth/locales/en';
 import catalog from '@modules/catalog/locales/en';
+import imageUpload from '@modules/common/components/ImageUpload/locales/en';
 import common from '@modules/common/locales/en';
 import dashboard from '@modules/dashboard/locales/en';
 import product from '@modules/product/locales/en';

@@ -1,61 +1,44 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-import { createClient } from '@utils/supabase/client';
+import { createClient } from '@core/clients/supabase/client';
+import { productClientDao } from '@modules/product/dao';
+import { ICreateProduct, IProduct } from '@modules/product/types';
+import { IUpdateProductInput } from '@modules/product/types/updateProduct';
 
-import { BUCKET_ID } from '../../../../constants/storage';
-import { productDao } from '../dao';
-import { ICreateProduct, IProduct, IUpdateProduct } from '../types';
+import productImageService from './product-image.service';
 
 class ProductService {
-    async createProduct(data: Omit<ICreateProduct, 'image'>): Promise<IProduct> {
-        const supabase = createClient();
+    async createProduct(data: ICreateProduct): Promise<IProduct> {
+        const createdProduct = await productClientDao.insert(data);
 
-        return productDao.insert(supabase, data);
+        const [file] = data.image as FileList;
+        const { publicUrl } = await productImageService.uploadProductImage(createdProduct.id, file);
+        return this.updateProduct({ productId: createdProduct.id, data: { imageUrl: publicUrl } })
     }
 
-    async updateProduct(productId: string, data: IUpdateProduct): Promise<void> {
-        const supabase = createClient();
+    async updateProduct(params: IUpdateProductInput): Promise<IProduct> {
+        const { data, productId } = params;
+        const { imageUrl } = data
+        await this.assumeUpdatedImage(productId, imageUrl)
 
-        await productDao.update(supabase, productId, data);
+        return productClientDao.update(data, productId);
     }
 
     async deleteProduct(productId: string): Promise<void> {
-        const supabase = createClient();
-
-        const folderPath = `product-image/${productId}`;
-
-        const { data: files, error: listError } = await supabase.storage
-            .from(BUCKET_ID)
-            .list(folderPath);
-
-        if (listError) {
-            throw new Error(listError.message);
-        }
-
-        if (files && files.length > 0) {
-            const filePaths = files.map((file) => `${folderPath}/${file.name}`);
-
-            const { error: removeError } = await supabase.storage
-                .from(BUCKET_ID)
-                .remove(filePaths);
-
-            if (removeError) {
-                throw new Error(removeError.message);
-            }
-        }
-
-        await productDao.delete(supabase, productId);
+        await productClientDao.delete(productId);
     }
 
-    // Subscribes to live row changes on the products table via Supabase Realtime
-    // and returns an unsubscribe function. Listening to every event (not just
-    // INSERT) is required because product creation is multi-step — the row is
-    // inserted with an empty image_url, then UPDATEd once the image upload and
-    // any Stripe provisioning finish — so consumers stay in sync as the row
-    // settles. Delivery is still bounded by the table's RLS select policy.
-    //
-    // The table must belong to the supabase_realtime publication for events to
-    // arrive (see the 20260622130000_products_realtime.sql migration).
+    private async assumeUpdatedImage(productId: string, imageUrl?: string): Promise<void> {
+        const product = await productClientDao.findById(productId);
+        const isImageUpdated = product.image_url !== imageUrl;
+
+        if (isImageUpdated) {
+            await productImageService.deleteImageByPath(product.image_url);
+        }
+
+        return;
+    }
+
     subscribeToChanges(
         onChange: (payload: RealtimePostgresChangesPayload<IProduct>) => void,
     ): () => void {
@@ -72,5 +55,4 @@ class ProductService {
     }
 }
 
-const productService = new ProductService;
-export default productService;
+export default new ProductService;

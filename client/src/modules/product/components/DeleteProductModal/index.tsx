@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { FC, useTransition, useState } from 'react';
 
-import { Button } from '@components';
+import { Button } from '@common/components';
 import en from '@modules/product/locales/en';
 
 interface IProps {

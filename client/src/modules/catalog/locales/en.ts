@@ -1,13 +1,9 @@
+import catalogProducts from '@catalog/components/CatalogProducts/locales/en';
+import catalogPage from '@catalog/pages/locales/en';
+
 const en = {
-    catalogProducts: {
-        noProducts: 'No products available yet.',
-        noImage: 'No image',
-    },
-    catalogPage: {
-        sectionLabel: 'Browse',
-        title: 'Catalog',
-        subtitle: 'Our curated collection, updated live as new products arrive.',
-    },
+    ...catalogProducts,
+    ...catalogPage,
 } as const;
 
 export default en;

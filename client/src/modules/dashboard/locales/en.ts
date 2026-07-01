@@ -1,9 +1,7 @@
+import dashboardPage from '@modules/dashboard/pages/locales/en';
+
 const en = {
-    dashboardPage: {
-        sectionLabel: 'Dashboard',
-        title: 'Products',
-        loading: 'Loading products…',
-    },
+    ...dashboardPage,
 } as const;
 
 export default en;

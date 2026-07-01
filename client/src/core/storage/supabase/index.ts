@@ -1,4 +1,4 @@
-import { createClient } from '../../clients/supabase/client';
+import { createClient } from '@core/clients/supabase/client';
 
 export abstract class StorageService {
     protected abstract readonly bucketId: string;

@@ -1,6 +1,5 @@
+import { createClient } from '@core/clients/supabase/server';
 import { IUser } from '@modules/user/types/user';
-
-import { createClient } from '../../../core/clients/supabase/server';
 
 class UserService {
     async fetchCurrentUser(): Promise<IUser | null> {

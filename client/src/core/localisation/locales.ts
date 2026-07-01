@@ -1,4 +1,4 @@
-import { getEnabled } from '@core/utils/getEnabled';
+import { getEnabled } from '@common/enums/GetEnabled';
 
 
 export enum Locale {

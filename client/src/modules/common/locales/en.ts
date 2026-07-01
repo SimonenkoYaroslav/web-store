@@ -1,14 +1,11 @@
+import imageUpload from '@common/components/ImageUpload/locales/en';
+import navbarHeader from '@common/components/Navbar/locales/en';
+import errorPage from '@common/pages/ErrorPage/locales/en';
+
 const en = {
-    navbarHeader: {
-        brandName: 'Web_Store',
-        closeMenu: 'Close menu',
-        openMenu: 'Open menu',
-    },
-    errorPage: {
-        title: 'Something went wrong',
-        description: 'An unexpected error occurred. Please try again.',
-        retryButton: 'Try again',
-    },
+    ...imageUpload,
+    ...navbarHeader,
+    ...errorPage,
 } as const;
 
 export default en;

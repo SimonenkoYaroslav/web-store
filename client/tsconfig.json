@@ -57,7 +57,7 @@
         "./src/core/localisation/*"
       ],
       "@constants/*": [
-        "./constants/*"
+        "./src/constants/*"
       ],
       "@app/*": [
         "./app/*"

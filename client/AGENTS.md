@@ -64,6 +64,8 @@ client/
 │       │   └── page.tsx        # DashboardPage (server): fetches products, renders table + add button
 │       └── forbidden/page.tsx
 ├── src/
+│   ├── constants/              # App-wide constant values — import via @constants/*
+│   │                           #   defaultLocales.ts (DEFAULT_LOCALE), cookies/x-path-name.ts (X_PATH_NAME)
 │   ├── core/                   # Cross-cutting infrastructure, grouped by technology. Import via @core/*
 │   │   ├── clients/supabase/   # createClient() factories: client.ts (browser) + server.ts (server)
 │   │   ├── storage/supabase/   # StorageService (abstract upload/download/url/delete over a bucket)
@@ -71,9 +73,10 @@ client/
 │   │   ├── paymentSystem/stripe/# server.ts — shared server-only Stripe client singleton
 │   │   ├── env/                # Validated, typed env access — import { env } from '@core/env'
 │   │   │                       #   (env.ts + env.schema.mjs, shared with the validation scripts)
-│   │   └── localisation/       # next-intl runtime: messages.ts (merged catalog + Messages type),
-│   │                           #   request.ts (getRequestConfig), intl.d.ts (AppConfig types),
-│   │                           #   en/ (re-export of the merged dictionary). See Localisation.
+│   │   └── localisation/       # next-intl runtime: locales.ts (Locale enum + resolveLocale),
+│   │                           #   locale.service.ts (cookie-based getLocale/changeLocale),
+│   │                           #   messages.ts (merged catalog + getMessages + Messages type),
+│   │                           #   request.ts (getRequestConfig), intl.d.ts (AppConfig types). See Localisation.
 │   └── modules/                # Feature modules; each is self-contained (see Module structure)
 │       ├── auth/               # components (LogInForm, SignUpForm, SignOutButton), enums (AccessType),
 │       │                       #   layouts (AuthGuard — client), services (auth.service),
@@ -89,14 +92,15 @@ client/
 │           │                   #   Loading, NavLink, Skeleton, TableSkeleton, GradientBackground) + Navbar
 │           ├── config/         # App-wide constants (DEFAULT_PAGINATION)
 │           ├── dao/supabase/   # BaseDao — single abstract data-access base (client injected, see DAO layer)
-│           ├── enums/          # CookieKey (in CookieyKey.ts — see Known Bugs), SortOrder
+│           ├── enums/          # CookieKey (in CookieyKey.ts — see Known Bugs), SortOrder,
+│           │                   #   GetEnabled.ts (the getEnabled config-collapse helper — a fn, not an enum)
 │           ├── hooks/          # useModal
 │           ├── layouts/        # MainLayout
 │           ├── pages/          # ErrorPage
+│           ├── service/        # Shared singleton services (note: singular folder):
+│           │                   #   formatting.service (formatDate), image.service (image validation/dimensions)
 │           ├── theme/          # ThemeRegistry (client) + theme.ts (MUI theme)
 │           └── types/          # INavItem (navigation.ts), IGetPaginatedData (paginatedData.ts)
-├── constants/
-│   └── storage.ts              # BUCKET_ID = "WebStore", BASE_BUCKET_URL — import via @constants/*
 ├── scripts/
 │   ├── validate-env.mjs        # Validates the local .env against the schema (pre-commit)
 │   └── check-env-example.mjs   # Asserts .env.example lists every schema var (pre-commit / CI)
@@ -121,7 +125,16 @@ If you remember the old layout, these moved — update any stale imports you fin
 - `utils/supabase/storage/index.ts` → `src/core/storage/supabase/index.ts` (class renamed `AbstractStorageService` → `StorageService`).
 - `src/core/stripe/server.ts` → `src/core/paymentSystem/stripe/server.ts`.
 - `src/core/theme/*` → `src/modules/common/theme/*`.
-- `src/localisation/en/*` → distributed per-module `locales/en.ts` files, aggregated in `src/modules/index.ts` (see Localisation).
+- `src/localisation/en/*` → distributed per-**component** `locales/en.ts` files, merged up per module in each
+  module's `locales/en.ts`, then aggregated across modules in `src/modules/index.ts` (see Localisation).
+- The top-level `constants/` directory → `src/constants/` (`@constants/*` now resolves to `src/constants/*`). The old
+  `constants/storage.ts` (`BUCKET_ID`/`BASE_BUCKET_URL`) is **gone**; the bucket id is now hard-coded in
+  `product-image.service.ts` (see Storage). New constants live under `src/constants/` (`defaultLocales.ts`, `cookies/x-path-name.ts`).
+- `src/modules/product/utils/*` → `src/modules/common/service/*`: `formatDate` became `formattingService.formatDate`
+  (`formatting.service.ts`) and the image validation/dimension helpers became `imageService` (`image.service.ts`).
+  The `src/modules/product/utils/` directory is deleted.
+- `src/core/utils/getEnabled.ts` → `src/modules/common/enums/GetEnabled.ts` (import `getEnabled` via `@common/enums/GetEnabled`).
+  The `src/core/utils/` directory is deleted.
 - The top-level `utils/` directory is deleted. The `@utils/*` alias still exists in `tsconfig.json`/eslint but resolves to nothing — treat it as dead until a `utils/` dir comes back.
 
 ### Where new code goes
@@ -145,13 +158,14 @@ Each module under `src/modules/` follows this internal layout (subfolders presen
 
 ```
 <module>/
-├── components/      # React components ('use client' when they need browser APIs)
+├── components/      # React components ('use client' when they need browser APIs); each owns its own
+│                    #   locales/en.ts (one namespace) next to it
 ├── contexts/        # React context providers + hooks ('use client')
 ├── dao/             # Data-access objects (thin Entity-typed wrappers over a Base*Dao)
 ├── enums/           # String enums
 ├── hooks/           # React hooks ('use client')
 ├── layouts/         # Wrapper components (guards, providers)
-├── locales/en.ts    # Module's English strings (merged into the app dictionary)
+├── locales/en.ts    # Merges this module's per-component locales (no literal strings; merged into the app dictionary)
 ├── navigation/      # Nav item definitions (INavItem[])
 ├── pages/           # Page-level server components composed by app/ routes
 ├── services/        # Business logic; classes exported as singletons via `export default new MyService`
@@ -161,8 +175,10 @@ Each module under `src/modules/` follows this internal layout (subfolders presen
 
 Modules expose a public API through an `index.ts` barrel — prefer importing from the barrel
 (`@modules/product`) over internal files, except where a file is explicitly server-only or imported by
-full path by convention (e.g. `get-product.service.ts`, `stripe-product.server.service.ts`). Note some
-barrels are intentionally empty right now (`src/modules/common/index.ts`); import those targets by full path.
+full path by convention (e.g. `get-product.service.ts`, `stripe-product.server.service.ts`). `common` has
+**no** barrel at all — import its targets by full path (`@common/components`, `@common/service/formatting.service`,
+`@common/enums/GetEnabled`, …). Note `common` also names its services folder `service/` (singular), unlike the
+`services/` convention feature modules use.
 
 ### DAO layer (data access)
 
@@ -189,16 +205,25 @@ export class ProductDao extends BaseDao<IProduct> {
 }
 ```
 
-Each service instantiates the DAO once with its context's factory:
+The class is context-neutral, so it is bound to a context **once in the `dao/` folder** rather than
+re-constructed inside every service. The **product** module pre-binds one singleton per context —
+`dao/client.ts` and `dao/server.ts`, each `new ProductDao(createClient)` with the matching `@core/clients`
+factory — and every service imports the one for its context (there is **no** `dao/index.ts` barrel here):
 
 ```typescript
-// server service:  import { createClient } from '@core/clients/supabase/server';
-// client service:  import { createClient } from '@core/clients/supabase/client';
-const productDao = new ProductDao(createClient);
+// dao/server.ts
+import { createClient } from '@core/clients/supabase/server';
+import { ProductDao } from './product.dao';
+export default new ProductDao(createClient);
+
+// a client service:  import productDao from '@modules/product/dao/client';
+// a server service:  import productDao from '@modules/product/dao/server';
 ```
 
-Module `dao/index.ts` barrels the classes by name (`ProductDao`, `UserDao`). Services depend on DAOs and inject
-the client factory; DAOs depend only on the abstract `SupabaseClient` API.
+The **user** module only barrels the `UserDao` class (`dao/index.ts`) and does **not** pre-bind it — and
+nothing consumes it yet: `user.service.ts` still queries Supabase directly (`client.from('users')…`), so the
+DAO layer is currently exercised only by `product`. Services depend on DAOs and supply the client factory; DAOs
+depend only on the abstract `SupabaseClient` API.
 
 ### Service pattern
 
@@ -234,7 +259,7 @@ in mind when debugging redirects.
 
 **Layer 1 — Middleware** (`proxy.ts` → `@core/proxy/supabase/proxy.ts`):
 - Runs on every request (`config.matcher` excludes `_next/*` and static image extensions).
-- Injects `x-pathname` header.
+- Injects an `x-path-name` header (the name is centralized as `X_PATH_NAME` in `@constants/cookies/x-path-name`).
 - Calls `supabase.auth.getClaims()`; if there is no session, redirects to `/login`.
 - Pass-through exceptions: `/` (home), `/login*`, `/register*`.
 
@@ -258,23 +283,38 @@ refresh — `LogInForm` uses `window.location.assign('/catalog')` (a hard naviga
 
 ### Localisation
 
-Localisation runs on **`next-intl` v4**, fed by the **per-module English dictionaries**. There is one locale
+Localisation runs on **`next-intl` v4**, fed by the **per-component English dictionaries**. There is one locale
 (`en`) and no URL locale routing yet — the runtime is wired so locales can be added later.
 
-**The catalog (source of truth is still per-module files):**
+**The catalog (source of truth is per-component files, merged in two tiers):**
 
-- Each module owns `locales/en.ts`, a `const` object of namespaced strings (e.g. `product/locales/en.ts`
-  exposes `addProductModal`, `productsTable`, …).
-- `src/modules/index.ts` spread-merges every module's `en` (plus the `ImageUpload` component's) into
-  `rootModule.locales.en`.
-- `src/core/localisation/messages.ts` merges that with the app-level strings (`app/locales/en.ts`) into the
-  single `messages` object handed to next-intl, and exports its `Messages` type. `@localisation/en` re-exports
-  the same merged catalog.
+- Each **component** (or page) owns `locales/en.ts` next to it, a `const` object holding **one** namespace
+  (e.g. `product/components/AddProductModal/locales/en.ts` exposes `addProductModal`;
+  `product/components/ProductsTable/locales/en.ts` exposes `productsTable`; `catalog/pages/locales/en.ts`
+  exposes `catalogPage`).
+- Each **module** re-collects its own components' locales into `locales/en.ts` — that file no longer holds
+  literal strings, it just imports the component dictionaries and spread-merges them (e.g.
+  `product/locales/en.ts` merges the five product component `en`s; `common/locales/en.ts` merges
+  `ImageUpload`, `Navbar`, and `ErrorPage`). Add cross-directory imports via a path alias (relative `../`
+  parent imports are an ESLint error).
+- `src/modules/index.ts` spread-merges every module's merged `en` into `rootModule.locales.en` (no component
+  is imported here directly anymore — each is reached through its module's `locales/en.ts`).
+- `src/core/localisation/messages.ts` merges that with the app-level strings (`app/locales/en.ts`, which stays
+  a single file and is **not** part of the module aggregation) into the per-locale catalog, exposes it via
+  `getMessages(locale)` (backed by `MESSAGES_BY_LOCALE`), and exports the `Messages` type. (The old
+  `@localisation/en` re-export and the `en/` folder are gone — the `@localisation/*` alias still exists but is
+  currently unused.)
 
 **The runtime wiring (all under `src/core/localisation/`):**
 
-- `request.ts` — `getRequestConfig` returning `{ locale: 'en', messages }`. Pointed at by
-  `createNextIntlPlugin('./src/core/localisation/request.ts')` in `next.config.ts`.
+- `locales.ts` — the `Locale` enum + `LOCALE_CONFIG` allow-map, `ENABLED_LOCALES` (derived via the
+  `getEnabled` helper in `@common/enums/GetEnabled`), and `resolveLocale()` / `isEnabledLocale()` that fall
+  back to `DEFAULT_LOCALE` for anything unsupported.
+- `locale.service.ts` — **server-only**: `getLocale()` reads the requested locale from the `CookieKey.LOCALE`
+  cookie (via `next/headers`) and resolves it; `changeLocale(requested)` validates and writes that cookie.
+- `request.ts` — `getRequestConfig` now negotiates per request (`getLocale()` → `getMessages(locale)`), no
+  longer a hard-coded `'en'`. Pointed at by `createNextIntlPlugin('./src/core/localisation/request.ts')` in
+  `next.config.ts`.
 - `intl.d.ts` — augments `AppConfig` (`Messages`, `Locale`) so `t('namespace.key')` is type-checked.
 - The root layout wraps the tree in `<NextIntlClientProvider>` (no props — in v4 a server-rendered provider
   auto-inherits `locale`/`messages` from the request config).
@@ -290,7 +330,9 @@ Localisation runs on **`next-intl` v4**, fed by the **per-module English diction
 - **Non-component helpers** (e.g. `ProductsTable/columns/*`) receive the scoped translator threaded down from
   the component (`getProductColumns(t, handlers)`); type it via `ProductsTableTranslator` in `columns/types.ts`.
 
-When adding UI text: add it to the relevant module's `locales/en.ts` namespace and read it through `t(...)`.
+When adding UI text: add it to the relevant **component's** `locales/en.ts` namespace (create the
+`locales/en.ts` next to the component and wire it into the module's `locales/en.ts` merge if the component
+doesn't have one yet) and read it through `t(...)`.
 
 ### Forms
 
@@ -363,8 +405,9 @@ catalog renders the static server list — wire it back in to make the grid live
 
 ### Storage
 
-- Bucket id and base URL are centralized in `constants/storage.ts` (`BUCKET_ID = "WebStore"`),
-  importable via `@constants/storage`.
+- The bucket id is currently **hard-coded** as `"WebStore"` in `product-image.service.ts`
+  (`protected readonly bucketId = "WebStore"`); the old centralized `constants/storage.ts`
+  (`BUCKET_ID`/`BASE_BUCKET_URL`) was removed. Re-centralize under `src/constants/` if a second consumer appears.
 - `src/core/storage/supabase/index.ts` defines the abstract `StorageService` (protected
   `uploadFile` / `downloadFile` / `getPublicUrl` / `deleteFile` over `this.bucketId`).
 - `product-image.service.ts` extends `StorageService`, pins the bucket, and exposes
@@ -443,8 +486,9 @@ The most fully built feature; use it as the reference for new CRUD modules. Publ
   `ProductsTable` renders the generic `<DataTable>` primitive (`IColumn<T>[]`); the column set is built by
   `ProductsTable/columns/getProductColumns()`, with one factory file per column
   (`imageColumn`, `nameColumn`, `typeColumn`, `priceColumn`, `createdAtColumn`, `actionsColumn`).
-- **dao/** — `product.dao.ts` exports the `ProductDao` class (extends `BaseDao<IProduct>`), barreled in
-  `dao/index.ts`. Each service instantiates it once with its context's `createClient` factory.
+- **dao/** — `product.dao.ts` exports the `ProductDao` class (extends `BaseDao<IProduct>`); `dao/client.ts`
+  and `dao/server.ts` export the pre-bound context singletons (`new ProductDao(createClient)`). Services import
+  the one matching their context (`@modules/product/dao/client` / `@modules/product/dao/server`). No `dao/index.ts` barrel.
 - **services/** — `product.service.ts` (client: create/update/delete via DAO, Realtime subscription, image
   cleanup), `get-product.service.ts` (server: `fetchProducts` via `productDao.findAll`),
   `product-image.service.ts` (client: image upload/delete), `stripe-product.server.service.ts` (server:
@@ -453,8 +497,8 @@ The most fully built feature; use it as the reference for new CRUD modules. Publ
 - **enums/** — `ProductType` (`Single` | `Subscription`), `BillingInterval` (`Monthly` | `Yearly`),
   `Currency` (`USD` | `EUR` | `GBP`) + `CURRENCY_SYMBOL` map.
 - **hooks/** — `useRealtimeProducts`.
-- **utils/** — `formatDate`; `image/` pure validation helpers (allowed format/size, minimum dimensions,
-  dimension reading) plus shared `constraints`/`messages`, re-exported from `image/index.ts`.
+- **utils/** — removed. `formatDate` and the image validation/dimension helpers moved to the shared
+  `@common/service/*` singletons (`formattingService` in `formatting.service.ts`, `imageService` in `image.service.ts`).
 
 `DashboardPage` and `CatalogPage` are server components that call `getProductService.fetchProducts()` and
 render the table / grid respectively.
@@ -482,7 +526,7 @@ ESLint error; see Coding Conventions):
 | `@catalog/*` | `src/modules/catalog/*` |
 | `@core/*` | `src/core/*` |
 | `@localisation/*` | `src/core/localisation/*` |
-| `@constants/*` | `constants/*` |
+| `@constants/*` | `src/constants/*` |
 | `@app/*` | `app/*` |
 | `@static` | `static` (reserved — does not exist yet) |
 | `@utils/*` | `utils/*` (**dangling** — the `utils/` dir was removed; alias kept but resolves to nothing) |
@@ -578,21 +622,18 @@ Fix these when you touch the relevant file; don't replicate the patterns.
    named `CookieKey`. Import from `@common/enums/CookieyKey` until renamed. (The cookie-based access-token
    flow it was built for is largely unused.)
 
-8. **Duplicate access-normalizer utils** — `normalizeAllowedAccess.ts` and `normalizeUserAccess.ts` are
-   byte-for-byte identical (both with trailing whitespace). Only `normalizeAllowedAccess` is used;
-   `normalizeUserAccess` is dead code. Delete the duplicate.
-
-9. **Duplicate enums** — `AccessType` and `UserRole` are identical (`'Admin' | 'User'`).
+8. **Duplicate enums** — `AccessType` and `UserRole` are identical (`'Admin' | 'User'`).
    `validateUserAccess` casts a `UserRole` to `AccessType` (`as unknown as AccessType`). Consider collapsing
    to one.
 
-10. **`SignUpForm` uses soft `router.push` after sign-up** — fine when sign-up returns no session (redirect
-    to `/login`), but if email confirmation is disabled and a session is returned, `router.push('/catalog')`
-    hits the stale-`UserContext` problem described in Auth Layer 3. Prefer a hard navigation when a session
-    exists.
+9. **`SignUpForm` uses soft `router.push` after sign-up** — fine when sign-up returns no session (redirect
+   to `/login`), but if email confirmation is disabled and a session is returned, `router.push('/catalog')`
+   hits the stale-`UserContext` problem described in Auth Layer 3. Prefer a hard navigation when a session
+   exists.
 
-11. **Empty barrel / dead alias** — `src/modules/common/index.ts` is empty (import its targets by full path);
-    the `@utils/*` alias resolves to a deleted directory.
+10. **Dead `@utils/*` alias** — the `@utils/*` alias resolves to a deleted directory (`utils/` is gone; the
+    now-`src/core/utils` folder was also removed). `src/modules/common/index.ts` no longer exists either —
+    `common` is imported by full path (see Module structure).
 
 ---
 
@@ -619,8 +660,9 @@ You are my advisor, not my assistant. Your job is accuracy, not agreement. Follo
 - API routes (`app/api/` does not exist) and server actions (`'use server'`).
 - Cart / orders (no UI, services, or tables).
 - Password reset flow.
-- Locale switching (next-intl is wired but English-only — no second catalog, no URL locale routing or
-  language switcher; add a locale by negotiating it in `src/core/localisation/request.ts`).
+- Locale switching UI/catalog (the cookie-based negotiation now exists — `locale.service.ts`
+  `getLocale`/`changeLocale` + `resolveLocale`, consumed by `request.ts` — but there is still only the `en`
+  catalog and one `Locale`, no URL locale routing, and no language-switcher component calling `changeLocale`).
 - Pagination in `BaseDao.findAll` (params accepted, `.range()` not applied).
 - Global state management beyond `UserContext` (no Redux/Zustand).
 - `@static` target and a `utils/` directory for `@utils/*` (aliases reserved/dangling, directories absent).

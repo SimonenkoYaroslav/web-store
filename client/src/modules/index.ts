@@ -2,7 +2,6 @@ import { INavItem } from '@common/types';
 import auth from '@modules/auth/locales/en';
 import { catalogNavItems } from '@modules/catalog';
 import catalog from '@modules/catalog/locales/en';
-import imageUpload from '@modules/common/components/ImageUpload/locales/en';
 import common from '@modules/common/locales/en';
 import { dashboardNavItems } from '@modules/dashboard';
 import dashboard from '@modules/dashboard/locales/en';
@@ -14,7 +13,6 @@ const en = {
     ...catalog,
     ...common,
     ...dashboard,
-    ...imageUpload,
     ...product,
     ...user,
 };

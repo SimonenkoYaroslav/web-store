@@ -13,7 +13,7 @@ interface IProps {
 
 export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
     const t = useTranslations('catalogProducts');
-    // const products = useRealtimeProducts(initialProducts);
+    const products = useRealtimeProducts(initialProducts);
 
     if (initialProducts.length === 0) {
         return (
@@ -25,7 +25,7 @@ export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
 
     return (
         <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {initialProducts.map((product) => (
+            {products.map((product) => (
                 <li key={product.id} className="glass-panel flex flex-col overflow-hidden">
                     <div className="relative aspect-square bg-sand-100">
                         {product.image_url ? (

@@ -1,7 +1,7 @@
+import profileCard from '@user/components/locales/en';
+
 const en = {
-    profileCard: {
-        logOut: 'Log out',
-    },
+    ...profileCard,
 } as const;
 
 export default en;

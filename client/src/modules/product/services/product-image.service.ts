@@ -1,4 +1,4 @@
-import { StorageService } from '../../../core/storage/supabase';
+import { StorageService } from '@core/storage/supabase';
 
 class ProductImageService extends StorageService {
     protected readonly bucketId = "WebStore"

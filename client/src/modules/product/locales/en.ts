@@ -1,83 +1,15 @@
+import addProductButton from '@modules/product/components/AddProductButton/locales/en';
+import addProductModal from '@modules/product/components/AddProductModal/locales/en';
+import deleteProductModal from '@modules/product/components/DeleteProductModal/locales/en';
+import editProductModal from '@modules/product/components/EditProductModal/locales/en';
+import productsTable from '@modules/product/components/ProductsTable/locales/en';
+
 const en = {
-    addProductButton: {
-        label: 'Add Product',
-    },
-    addProductModal: {
-        title: 'Add Product',
-        nameLabel: 'Name',
-        typeLabel: 'Type',
-        billingIntervalLabel: 'Billing Interval',
-        amountLabel: 'Amount',
-        currencyLabel: 'Currency',
-        cancelButton: 'Cancel',
-        submittingLabel: 'Adding...',
-        submitButton: 'Add Product',
-        serverError: 'Something went wrong',
-        validation: {
-            nameRequired: 'Name is required',
-            typeInvalid: 'Invalid product type',
-            typeRequired: 'Type is required',
-            intervalInvalid: 'Invalid billing interval',
-            intervalRequired: 'Billing interval is required',
-            amountNotNumber: 'Amount must be a number',
-            amountRequired: 'Amount is required',
-            amountNonNegative: 'Amount must be non-negative',
-            currencyInvalid: 'Invalid currency',
-            currencyRequired: 'Currency is required',
-            imageRequired: 'Image is required',
-            imageWrongFormat: 'Wrong image format',
-            imageIncompatibleSize: 'Incompitible image size',
-            imageWrongDimensions: 'Incorrect image dimension',
-        },
-    },
-    editProductModal: {
-        title: 'Edit Product',
-        nameLabel: 'Name',
-        typeLabel: 'Type',
-        amountLabel: 'Amount',
-        currencyLabel: 'Currency',
-        replaceImageLabel: 'Replace Image',
-        cancelButton: 'Cancel',
-        submittingLabel: 'Saving...',
-        submitButton: 'Save Changes',
-        serverError: 'Something went wrong',
-        validation: {
-            nameRequired: 'Name is required',
-            typeInvalid: 'Invalid product type',
-            typeRequired: 'Type is required',
-            amountNotNumber: 'Amount must be a number',
-            amountRequired: 'Amount is required',
-            amountNonNegative: 'Amount must be non-negative',
-            currencyInvalid: 'Invalid currency',
-            currencyRequired: 'Currency is required',
-            imageWrongFormat: 'Wrong image format',
-            imageIncompatibleSize: 'Incompitible image size',
-            imageWrongDimensions: 'Incorrect image dimension',
-        },
-    },
-    deleteProductModal: {
-        title: 'Delete Product',
-        confirmPrefix: 'Are you sure you want to delete',
-        cannotUndo: 'This action cannot be undone.',
-        cancelButton: 'Cancel',
-        submittingLabel: 'Deleting...',
-        submitButton: 'Delete',
-        serverError: 'Something went wrong',
-    },
-    productsTable: {
-        columns: {
-            image: 'Image',
-            name: 'Name',
-            type: 'Type',
-            price: 'Price',
-            createdAt: 'Created At',
-        },
-        ariaLabels: {
-            editProduct: 'edit product',
-            deleteProduct: 'delete product',
-        },
-        emptyMessage: 'No products found.',
-    },
+    ...addProductButton,
+    ...addProductModal,
+    ...deleteProductModal,
+    ...editProductModal,
+    ...productsTable,
 } as const;
 
 export default en;

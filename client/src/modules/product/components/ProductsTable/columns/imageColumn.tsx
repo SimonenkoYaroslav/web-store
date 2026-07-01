@@ -1,14 +1,13 @@
 import Image from 'next/image';
 
 import { IColumn } from '@modules/common/components';
-import en from '@modules/product/locales/en';
 import { IProduct } from '@modules/product/types';
 
-const t = en.productsTable;
+import { ProductsTableTranslator } from './types';
 
-export const imageColumn = (): IColumn<IProduct> => ({
+export const imageColumn = (t: ProductsTableTranslator): IColumn<IProduct> => ({
     key: 'image',
-    header: t.columns.image,
+    header: t('columns.image'),
     cell: (product) => (
         <Image
             src={product.image_url}

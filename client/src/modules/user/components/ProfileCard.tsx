@@ -3,18 +3,17 @@
 import LogoutIcon from '@mui/icons-material/Logout'
 import { Avatar, Tooltip } from '@mui/material'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 import { authService } from '@modules/auth/services'
 import { useUser } from '@modules/user'
-import en from '@modules/user/locales/en'
 
 interface IProps {
     isOpen: boolean
 }
 
-const t = en.profileCard
-
 export const ProfileCard = ({ isOpen }: IProps) => {
+    const t = useTranslations('profileCard')
     const router = useRouter();
     const { user } = useUser()
 
@@ -54,7 +53,7 @@ export const ProfileCard = ({ isOpen }: IProps) => {
                             className="w-full flex items-center gap-2 px-3 py-2 border-2 border-transparent uppercase tracking-wider text-sm text-brand-200 hover:border-brand-700 hover:bg-brand-800 hover:text-red-300 transition-colors duration-150"
                         >
                             <LogoutIcon sx={{ fontSize: 16 }} />
-                            {t.logOut}
+                            {t('logOut')}
                         </button>
                     </form>
                 </div>

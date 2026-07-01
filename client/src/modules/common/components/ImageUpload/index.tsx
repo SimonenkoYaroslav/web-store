@@ -1,12 +1,11 @@
 'use client'
 
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
 
 import Button from '@common/components/Button';
-
-import en from './locales/en';
 
 interface IImageUploadProps {
     registration: UseFormRegisterReturn;
@@ -16,8 +15,6 @@ interface IImageUploadProps {
     changeLabel?: string;
     onFileChange?: (hasFile: boolean) => void;
 }
-
-const t = en.imageUpload;
 
 /**
  * Shared image upload field for react-hook-form.
@@ -32,12 +29,16 @@ const ImageUpload: FC<IImageUploadProps> = ({
     registration,
     error,
     fallbackSrc = null,
-    uploadLabel = t.uploadLabel,
-    changeLabel = t.changeLabel,
+    uploadLabel,
+    changeLabel,
     onFileChange,
 }) => {
+    const t = useTranslations('imageUpload');
     const [preview, setPreview] = useState<string | null>(null);
     const { onChange: registerOnChange, ...fieldRest } = registration;
+
+    const resolvedUploadLabel = uploadLabel ?? t('uploadLabel');
+    const resolvedChangeLabel = changeLabel ?? t('changeLabel');
 
     useEffect(() => {
         return () => {
@@ -66,7 +67,7 @@ const ImageUpload: FC<IImageUploadProps> = ({
                 fullWidth
                 color={error ? 'error' : 'primary'}
             >
-                {preview ? changeLabel : uploadLabel}
+                {preview ? resolvedChangeLabel : resolvedUploadLabel}
                 <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -82,7 +83,7 @@ const ImageUpload: FC<IImageUploadProps> = ({
                 <div className={`mt-2 rounded-lg border overflow-hidden ${error ? 'border-red-300' : 'border-brand-200'}`}>
                     <Image
                         src={previewSrc}
-                        alt={t.previewAlt}
+                        alt={t('previewAlt')}
                         width={500}
                         height={160}
                         unoptimized={!!preview}

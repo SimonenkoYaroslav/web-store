@@ -1,7 +1,10 @@
+import { INavItem } from '@common/types';
 import auth from '@modules/auth/locales/en';
+import { catalogNavItems } from '@modules/catalog';
 import catalog from '@modules/catalog/locales/en';
 import imageUpload from '@modules/common/components/ImageUpload/locales/en';
 import common from '@modules/common/locales/en';
+import { dashboardNavItems } from '@modules/dashboard';
 import dashboard from '@modules/dashboard/locales/en';
 import product from '@modules/product/locales/en';
 import user from '@modules/user/locales/en';
@@ -14,12 +17,18 @@ const en = {
     ...imageUpload,
     ...product,
     ...user,
-} as const;
+};
+
+const navigation: INavItem[] = [
+    ...catalogNavItems,
+    ...dashboardNavItems,
+];
 
 const rootModule = {
     locales: {
         en,
-    }
-}
+    },
+    navigation,
+};
 
 export default rootModule;

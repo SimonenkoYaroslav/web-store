@@ -2,14 +2,13 @@ import { Chip } from '@mui/material';
 
 import { IColumn } from '@modules/common/components';
 import { ProductType } from '@modules/product/enums/ProductType';
-import en from '@modules/product/locales/en';
 import { IProduct } from '@modules/product/types';
 
-const t = en.productsTable;
+import { ProductsTableTranslator } from './types';
 
-export const typeColumn = (): IColumn<IProduct> => ({
+export const typeColumn = (t: ProductsTableTranslator): IColumn<IProduct> => ({
     key: 'type',
-    header: t.columns.type,
+    header: t('columns.type'),
     cell: (product) => (
         <Chip
             label={product.type}

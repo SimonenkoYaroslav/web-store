@@ -4,23 +4,23 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { TextField, Box, Alert } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FC, useState } from "react";
+import { useTranslations } from "next-intl";
+import { FC, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@common/components";
-import en from '@modules/auth/locales/en';
 import { authService } from "@modules/auth/services";
 import { ISignUp } from "@modules/auth/types/auth.types";
 
-import { signUpSchema } from "./schemas/signUp.schema";
+import { createSignUpSchema } from "./schemas/signUp.schema";
 
 type SignUpFormValues = ISignUp & { confirmPassword: string };
 
-const t = en.signUpForm;
-
 export const SignUpForm: FC = () => {
+    const t = useTranslations('signUpForm');
     const router = useRouter();
     const [serverError, setServerError] = useState<string | null>(null);
+    const signUpSchema = useMemo(() => createSignUpSchema(t), [t]);
 
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignUpFormValues>({
         resolver: yupResolver(signUpSchema),
@@ -38,7 +38,7 @@ export const SignUpForm: FC = () => {
             // user to sign in once they have confirmed. Otherwise log them straight in.
             router.push(data.session ? '/catalog' : '/login');
         } catch (error) {
-            setServerError(error instanceof Error ? error.message : t.serverError);
+            setServerError(error instanceof Error ? error.message : t('serverError'));
         }
     });
 
@@ -52,9 +52,9 @@ export const SignUpForm: FC = () => {
                 autoComplete="off"
             >
                 <div className="mb-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-700">{t.brandLabel}</p>
-                    <h2 className="font-serif text-4xl font-bold text-brand-900">{t.title}</h2>
-                    <p className="mt-1 text-sm text-brand-600">{t.subtitle}</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-700">{t('brandLabel')}</p>
+                    <h2 className="font-serif text-4xl font-bold text-brand-900">{t('title')}</h2>
+                    <p className="mt-1 text-sm text-brand-600">{t('subtitle')}</p>
                 </div>
 
                 {serverError && <Alert severity="error">{serverError}</Alert>}
@@ -65,7 +65,7 @@ export const SignUpForm: FC = () => {
                     {...register('firstName')}
                     autoComplete="off"
                     required
-                    label={t.firstNameLabel}
+                    label={t('firstNameLabel')}
                     fullWidth
                 />
 
@@ -75,7 +75,7 @@ export const SignUpForm: FC = () => {
                     {...register('lastName')}
                     autoComplete="off"
                     required
-                    label={t.lastNameLabel}
+                    label={t('lastNameLabel')}
                     fullWidth
                 />
 
@@ -86,7 +86,7 @@ export const SignUpForm: FC = () => {
                     autoComplete="off"
                     required
                     type="email"
-                    label={t.emailLabel}
+                    label={t('emailLabel')}
                     fullWidth
                 />
 
@@ -97,7 +97,7 @@ export const SignUpForm: FC = () => {
                     autoComplete="off"
                     required
                     type="password"
-                    label={t.passwordLabel}
+                    label={t('passwordLabel')}
                     fullWidth
                 />
 
@@ -108,15 +108,15 @@ export const SignUpForm: FC = () => {
                     autoComplete="off"
                     required
                     type="password"
-                    label={t.confirmPasswordLabel}
+                    label={t('confirmPasswordLabel')}
                     fullWidth
                 />
 
-                <Button type="submit" loading={isSubmitting} variant="contained" size="large">{t.submitButton}</Button>
+                <Button type="submit" loading={isSubmitting} variant="contained" size="large">{t('submitButton')}</Button>
 
                 <p className="text-sm text-brand-600">
-                    {t.hasAccount}{' '}
-                    <Link className="font-semibold text-gold-700 underline-offset-2 hover:underline" href="/login">{t.signInLink}</Link>
+                    {t('hasAccount')}{' '}
+                    <Link className="font-semibold text-gold-700 underline-offset-2 hover:underline" href="/login">{t('signInLink')}</Link>
                 </p>
             </Box>
         </div>

@@ -1,11 +1,10 @@
 import { IColumn } from '@modules/common/components';
-import en from '@modules/product/locales/en';
 import { IProduct } from '@modules/product/types';
 
-const t = en.productsTable;
+import { ProductsTableTranslator } from './types';
 
-export const nameColumn = (): IColumn<IProduct> => ({
+export const nameColumn = (t: ProductsTableTranslator): IColumn<IProduct> => ({
     key: 'name',
-    header: t.columns.name,
+    header: t('columns.name'),
     cell: (product) => product.name,
 });

@@ -25,6 +25,9 @@ const en = {
             currencyInvalid: 'Invalid currency',
             currencyRequired: 'Currency is required',
             imageRequired: 'Image is required',
+            imageWrongFormat: 'Wrong image format',
+            imageIncompatibleSize: 'Incompitible image size',
+            imageWrongDimensions: 'Incorrect image dimension',
         },
     },
     editProductModal: {
@@ -47,6 +50,9 @@ const en = {
             amountNonNegative: 'Amount must be non-negative',
             currencyInvalid: 'Invalid currency',
             currencyRequired: 'Currency is required',
+            imageWrongFormat: 'Wrong image format',
+            imageIncompatibleSize: 'Incompitible image size',
+            imageWrongDimensions: 'Incorrect image dimension',
         },
     },
     deleteProductModal: {

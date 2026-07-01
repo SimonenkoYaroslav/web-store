@@ -1,17 +1,17 @@
+import type { Messages, _Translator } from "next-intl";
 import { object, ref, string } from "yup";
 
-import en from '@modules/auth/locales/en';
+type Translate = _Translator<Messages, 'signUpForm'>;
 
-const { validation } = en.signUpForm;
-
-export const signUpSchema = object({
-    firstName: string().trim().required(validation.firstNameRequired),
-    lastName: string().trim().required(validation.lastNameRequired),
-    email: string().email(validation.emailInvalid).required(validation.emailRequired),
-    password: string()
-        .min(8, validation.passwordMin)
-        .required(validation.passwordRequired),
-    confirmPassword: string()
-        .oneOf([ref("password")], validation.passwordsMatch)
-        .required(validation.confirmPasswordRequired),
-})
+export const createSignUpSchema = (t: Translate) =>
+    object({
+        firstName: string().trim().required(t('validation.firstNameRequired')),
+        lastName: string().trim().required(t('validation.lastNameRequired')),
+        email: string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+        password: string()
+            .min(8, t('validation.passwordMin'))
+            .required(t('validation.passwordRequired')),
+        confirmPassword: string()
+            .oneOf([ref("password")], t('validation.passwordsMatch'))
+            .required(t('validation.confirmPasswordRequired')),
+    });

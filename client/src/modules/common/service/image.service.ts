@@ -3,13 +3,11 @@ export interface IImageDimensions {
     height: number;
 }
 
-
 class ImageService {
     ALLOWED_IMAGE_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
     MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
     MIN_IMAGE_WIDTH = 307;
     MIN_IMAGE_HEIGHT = 350;
-
 
     hasAllowedFormat(value: unknown): boolean {
         const file = this.pickFirstFile(value);

@@ -1,11 +1,10 @@
 import { IColumn } from '@modules/common/components';
-import en from '@modules/product/locales/en';
 import { IProduct } from '@modules/product/types';
 
-const t = en.productsTable;
+import { ProductsTableTranslator } from './types';
 
-export const priceColumn = (): IColumn<IProduct> => ({
+export const priceColumn = (t: ProductsTableTranslator): IColumn<IProduct> => ({
     key: 'price',
-    header: t.columns.price,
+    header: t('columns.price'),
     cell: (product) => `${product.amount} ${product.currency}`,
 });

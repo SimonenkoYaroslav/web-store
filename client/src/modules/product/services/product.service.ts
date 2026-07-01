@@ -1,7 +1,7 @@
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 import { createClient } from '@core/clients/supabase/client';
-import { productClientDao } from '@modules/product/dao';
+import productDao from '@modules/product/dao/client'
 import { ICreateProduct, IProduct } from '@modules/product/types';
 import { IUpdateProductInput } from '@modules/product/types/updateProduct';
 
@@ -9,7 +9,7 @@ import productImageService from './product-image.service';
 
 class ProductService {
     async createProduct(data: ICreateProduct): Promise<IProduct> {
-        const createdProduct = await productClientDao.insert(data);
+        const createdProduct = await productDao.insert(data);
 
         const [file] = data.image as FileList;
         const { publicUrl } = await productImageService.uploadProductImage(createdProduct.id, file);
@@ -21,15 +21,15 @@ class ProductService {
         const { imageUrl } = data
         await this.assumeUpdatedImage(productId, imageUrl)
 
-        return productClientDao.update(data, productId);
+        return productDao.update(data, productId);
     }
 
     async deleteProduct(productId: string): Promise<void> {
-        await productClientDao.delete(productId);
+        await productDao.delete(productId);
     }
 
     private async assumeUpdatedImage(productId: string, imageUrl?: string): Promise<void> {
-        const product = await productClientDao.findById(productId);
+        const product = await productDao.findById(productId);
         const isImageUpdated = product.image_url !== imageUrl;
 
         if (isImageUpdated) {

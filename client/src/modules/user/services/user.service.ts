@@ -1,17 +1,18 @@
-import { createClient } from '@core/clients/supabase/server';
-import { userDao } from '@modules/user/dao';
 import { IUser } from '@modules/user/types/user';
+
+import { createClient } from '../../../core/clients/supabase/server';
 
 class UserService {
     async fetchCurrentUser(): Promise<IUser | null> {
-        const supabase = await createClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const client = await createClient();
+        const { data: { user }, error: authError } = await client.auth.getUser();
 
         if (authError || !user) {
             return null;
         }
 
-        return userDao.findById(user.id);
+        const { data } = await client.from('users').select<'*', IUser>('*').eq('id', user.id).single();
+        return data;
     };
 }
 

@@ -14,16 +14,16 @@ import {
     FormHelperText,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { FC, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { FC, useMemo, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
 import { Button, ImageUpload } from '@common/components';
 import { Currency, CURRENCY_SYMBOL } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
-import en from '@modules/product/locales/en';
 import { IProduct } from '@modules/product/types';
 
-import { editProductSchema } from './schemas/editProduct.schema';
+import { createEditProductSchema } from './schemas/editProduct.schema';
 import { updateProduct } from './utils/updateProduct';
 
 interface IProps {
@@ -32,11 +32,11 @@ interface IProps {
     onClose: () => void;
 }
 
-const t = en.editProductModal;
-
 export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
+    const t = useTranslations('editProductModal');
     const router = useRouter();
     const [hasNewImage, setHasNewImage] = useState(false);
+    const schema = useMemo(() => createEditProductSchema(t), [t]);
 
     const {
         register,
@@ -46,7 +46,7 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
         setError,
         formState: { errors, isSubmitting },
     } = useForm({
-        resolver: yupResolver(editProductSchema),
+        resolver: yupResolver(schema),
         mode: 'onChange',
         defaultValues: {
             name: product.name,
@@ -68,18 +68,18 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
             handleClose();
             router.refresh();
         } catch (err) {
-            setError('root', { message: err instanceof Error ? err.message : t.serverError });
+            setError('root', { message: err instanceof Error ? err.message : t('serverError') });
         }
     });
 
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-            <DialogTitle>{t.title}</DialogTitle>
+            <DialogTitle>{t('title')}</DialogTitle>
             <form onSubmit={onSubmit}>
                 <DialogContent className="flex flex-col gap-4">
                     <TextField
                         {...register('name')}
-                        label={t.nameLabel}
+                        label={t('nameLabel')}
                         fullWidth
                         size="small"
                         error={!!errors.name}
@@ -91,8 +91,8 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                         control={control}
                         render={({ field, fieldState: { error } }) => (
                             <FormControl fullWidth size="small" error={!!error}>
-                                <InputLabel>{t.typeLabel}</InputLabel>
-                                <Select {...field} label={t.typeLabel} value={field.value ?? ''}>
+                                <InputLabel>{t('typeLabel')}</InputLabel>
+                                <Select {...field} label={t('typeLabel')} value={field.value ?? ''}>
                                     {Object.values(ProductType).map((type) => (
                                         <MenuItem key={type} value={type}>{type}</MenuItem>
                                     ))}
@@ -105,7 +105,7 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                     <div className="flex gap-3">
                         <TextField
                             {...register('amount')}
-                            label={t.amountLabel}
+                            label={t('amountLabel')}
                             type="number"
                             size="small"
                             error={!!errors.amount}
@@ -117,8 +117,8 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                                 <FormControl size="small" error={!!error} className="w-32">
-                                    <InputLabel>{t.currencyLabel}</InputLabel>
-                                    <Select {...field} label={t.currencyLabel} value={field.value ?? ''}>
+                                    <InputLabel>{t('currencyLabel')}</InputLabel>
+                                    <Select {...field} label={t('currencyLabel')} value={field.value ?? ''}>
                                         {Object.values(Currency).map((currency) => (
                                             <MenuItem key={currency} value={currency}>
                                                 {CURRENCY_SYMBOL[currency]} {currency}
@@ -135,7 +135,7 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
                         registration={register('image')}
                         error={errors.image?.message}
                         fallbackSrc={product.image_url}
-                        uploadLabel={t.replaceImageLabel}
+                        uploadLabel={t('replaceImageLabel')}
                         onFileChange={setHasNewImage}
                     />
 
@@ -146,10 +146,10 @@ export const EditProductModal: FC<IProps> = ({ open, product, onClose }) => {
 
                 <DialogActions className="px-6 pb-4">
                     <Button onClick={handleClose} disabled={isSubmitting}>
-                        {t.cancelButton}
+                        {t('cancelButton')}
                     </Button>
                     <Button type="submit" variant="contained" loading={isSubmitting}>
-                        {isSubmitting ? t.submittingLabel : t.submitButton}
+                        {isSubmitting ? t('submittingLabel') : t('submitButton')}
                     </Button>
                 </DialogActions>
             </form>

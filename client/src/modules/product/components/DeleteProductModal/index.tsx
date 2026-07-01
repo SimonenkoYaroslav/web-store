@@ -7,10 +7,10 @@ import {
     DialogActions,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { FC, useTransition, useState } from 'react';
 
 import { Button } from '@common/components';
-import en from '@modules/product/locales/en';
 
 interface IProps {
     open: boolean;
@@ -19,9 +19,8 @@ interface IProps {
     onClose: () => void;
 }
 
-const t = en.deleteProductModal;
-
 export const DeleteProductModal: FC<IProps> = ({ open, productId: _productId, productName, onClose }) => {
+    const t = useTranslations('deleteProductModal');
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
@@ -32,7 +31,7 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId: _productId, pr
                 onClose();
                 router.refresh();
             } catch (err) {
-                setError(err instanceof Error ? err.message : t.serverError);
+                setError(err instanceof Error ? err.message : t('serverError'));
             }
         });
     };
@@ -44,18 +43,18 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId: _productId, pr
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-            <DialogTitle>{t.title}</DialogTitle>
+            <DialogTitle>{t('title')}</DialogTitle>
             <DialogContent>
                 <p className="text-brand-700">
-                    {t.confirmPrefix}{' '}
+                    {t('confirmPrefix')}{' '}
                     <span className="font-semibold">&ldquo;{productName}&rdquo;</span>?{' '}
-                    {t.cannotUndo}
+                    {t('cannotUndo')}
                 </p>
                 {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
             </DialogContent>
             <DialogActions className="px-6 pb-4">
                 <Button onClick={handleClose} disabled={isPending}>
-                    {t.cancelButton}
+                    {t('cancelButton')}
                 </Button>
                 <Button
                     variant="contained"
@@ -63,7 +62,7 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId: _productId, pr
                     loading={isPending}
                     onClick={handleDelete}
                 >
-                    {isPending ? t.submittingLabel : t.submitButton}
+                    {isPending ? t('submittingLabel') : t('submitButton')}
                 </Button>
             </DialogActions>
         </Dialog>

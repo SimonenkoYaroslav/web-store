@@ -1,40 +1,37 @@
+import type { Messages, _Translator } from 'next-intl';
 import { object, string, number, mixed } from 'yup';
 
+import imageService from '@modules/common/service/image.service';
 import { BillingInterval } from '@modules/product/enums/BillingInterval';
 import { Currency } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
-import {
-    IMAGE_DIMENSIONS_MESSAGE,
-    IMAGE_FORMAT_MESSAGE,
-    IMAGE_SIZE_MESSAGE,
-    hasAllowedFormat,
-    hasAllowedSize,
-    hasMinimumDimensions,
-} from '@modules/product/utils/image';
 
-export const createProductSchema = object({
-    name: string().required('Name is required'),
-    type: mixed<ProductType>()
-        .oneOf(Object.values(ProductType), 'Invalid product type')
-        .required('Type is required'),
-    interval: mixed<BillingInterval>()
-        .oneOf(Object.values(BillingInterval), 'Invalid billing interval')
-        .when('type', {
-            is: ProductType.Subscription,
-            then: (schema) => schema.required('Billing interval is required'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-    amount: number()
-        .typeError('Amount must be a number')
-        .required('Amount is required')
-        .min(0, 'Amount must be non-negative'),
-    currency: mixed<Currency>()
-        .oneOf(Object.values(Currency), 'Invalid currency')
-        .required('Currency is required'),
-    image: mixed<FileList>()
-        .required('Image is required')
-        .test('hasFile', 'Image is required', (value) => value instanceof FileList && value.length > 0)
-        .test('fileFormat', IMAGE_FORMAT_MESSAGE, hasAllowedFormat)
-        .test('fileSize', IMAGE_SIZE_MESSAGE, hasAllowedSize)
-        .test('fileDimensions', IMAGE_DIMENSIONS_MESSAGE, hasMinimumDimensions),
-});
+type Translate = _Translator<Messages, 'addProductModal'>;
+
+export const createProductSchema = (t: Translate) =>
+    object({
+        name: string().required(t('validation.nameRequired')),
+        type: mixed<ProductType>()
+            .oneOf(Object.values(ProductType), t('validation.typeInvalid'))
+            .required(t('validation.typeRequired')),
+        interval: mixed<BillingInterval>()
+            .oneOf(Object.values(BillingInterval), t('validation.intervalInvalid'))
+            .when('type', {
+                is: ProductType.Subscription,
+                then: (schema) => schema.required(t('validation.intervalRequired')),
+                otherwise: (schema) => schema.notRequired(),
+            }),
+        amount: number()
+            .typeError(t('validation.amountNotNumber'))
+            .required(t('validation.amountRequired'))
+            .min(0, t('validation.amountNonNegative')),
+        currency: mixed<Currency>()
+            .oneOf(Object.values(Currency), t('validation.currencyInvalid'))
+            .required(t('validation.currencyRequired')),
+        image: mixed<FileList>()
+            .required(t('validation.imageRequired'))
+            .test('hasFile', t('validation.imageRequired'), (value) => value instanceof FileList && value.length > 0)
+            .test('fileFormat', t('validation.imageWrongFormat'), imageService.hasAllowedFormat)
+            .test('fileSize', t('validation.imageIncompatibleSize'), imageService.hasAllowedSize)
+            .test('fileDimensions', t('validation.imageWrongDimensions'), imageService.hasMinimumDimensions),
+    });

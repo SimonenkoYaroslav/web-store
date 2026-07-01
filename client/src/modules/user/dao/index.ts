@@ -1,1 +1,1 @@
-export { default as userDao } from './user.dao';
+export { UserDao } from './user.dao';

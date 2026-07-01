@@ -1,4 +1,4 @@
-export class FormattingService {
+class FormattingService {
     formatDate(value: string | Date): string {
         const date = new Date(value);
 
@@ -10,3 +10,5 @@ export class FormattingService {
     };
 
 }
+
+export default new FormattingService;

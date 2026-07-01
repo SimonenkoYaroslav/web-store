@@ -1,12 +1,11 @@
 import { IColumn } from '@modules/common/components';
-import en from '@modules/product/locales/en';
+import formattingService from '@modules/common/service/formatting.service';
 import { IProduct } from '@modules/product/types';
-import { formatDate } from '@modules/product/utils/formatDate';
 
-const t = en.productsTable;
+import { ProductsTableTranslator } from './types';
 
-export const createdAtColumn = (): IColumn<IProduct> => ({
+export const createdAtColumn = (t: ProductsTableTranslator): IColumn<IProduct> => ({
     key: 'created_at',
-    header: t.columns.createdAt,
-    cell: (product) => formatDate(product.created_at),
+    header: t('columns.createdAt'),
+    cell: (product) => formattingService.formatDate(product.created_at),
 });

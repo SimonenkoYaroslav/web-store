@@ -1,6 +1,5 @@
 import { SortOrder } from "@modules/common/enums/SortOrder";
 
-
 export interface IGetPaginatedData<Entity> {
     page: number;
     pageSize: number;

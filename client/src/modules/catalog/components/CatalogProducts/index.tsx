@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 
-import en from '@modules/catalog/locales/en';
 import { useRealtimeProducts, ProductType } from '@modules/product';
 import { IProduct } from '@modules/product/types';
 
@@ -11,15 +11,14 @@ interface IProps {
     initialProducts: IProduct[];
 }
 
-const t = en.catalogProducts;
-
 export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
+    const t = useTranslations('catalogProducts');
     // const products = useRealtimeProducts(initialProducts);
 
     if (initialProducts.length === 0) {
         return (
             <div className="glass-panel mt-8 py-12 text-center uppercase tracking-wider text-brand-600">
-                {t.noProducts}
+                {t('noProducts')}
             </div>
         );
     }
@@ -39,7 +38,7 @@ export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
                             />
                         ) : (
                             <div className="flex h-full items-center justify-center text-xs uppercase text-brand-400">
-                                {t.noImage}
+                                {t('noImage')}
                             </div>
                         )}
                     </div>

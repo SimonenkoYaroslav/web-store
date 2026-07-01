@@ -1,10 +1,10 @@
+import type { Messages, _Translator } from "next-intl";
 import { object, string } from "yup";
 
-import en from '@modules/auth/locales/en';
+type Translate = _Translator<Messages, 'logInForm'>;
 
-const { validation } = en.logInForm;
-
-export const signInSchema = object({
-    email: string().email(validation.emailInvalid).required(validation.emailRequired),
-    password: string().required(validation.passwordRequired),
-})
+export const createSignInSchema = (t: Translate) =>
+    object({
+        email: string().email(t('validation.emailInvalid')).required(t('validation.emailRequired')),
+        password: string().required(t('validation.passwordRequired')),
+    });

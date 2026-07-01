@@ -1,10 +1,10 @@
 import { SortOrder } from '@modules/common/enums/SortOrder';
-import { productServerDao } from '@modules/product/dao';
+import productDao from '@modules/product/dao/server';
 import { IProduct } from '@modules/product/types';
 
 class GetProductService {
     async fetchProducts(): Promise<IProduct[]> {
-        return productServerDao.findAll({
+        return productDao.findAll({
             page: 1,
             pageSize: 100,
             sortBy: 'created_at',

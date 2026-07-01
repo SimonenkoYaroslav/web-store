@@ -1,6 +1,7 @@
 import { ISignIn, ISignUp } from "@auth/types/auth.types";
-import { createClient } from "@core/clients/supabase/client";
 import { UserRole } from "@modules/user/enums/UserRole";
+
+import { createClient } from "../../../core/clients/supabase/client";
 
 class AuthService {
     async signInUser({ email, password }: ISignIn) {

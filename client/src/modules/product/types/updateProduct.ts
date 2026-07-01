@@ -9,7 +9,6 @@ export interface IUpdateProduct {
     imageUrl?: string;
 }
 
-
 export interface IUpdateProductInput {
     productId: string;
     data: IUpdateProduct;

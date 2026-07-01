@@ -1,25 +1,26 @@
 'use client'
 
+import { useTranslations } from 'next-intl';
 import { FC, useState } from 'react';
 
 import { DataTable } from '@modules/common/components';
 import { DeleteProductModal } from '@modules/product/components/DeleteProductModal';
 import { EditProductModal } from '@modules/product/components/EditProductModal';
 import { getProductColumns } from '@modules/product/components/ProductsTable/columns';
-import en from '@modules/product/locales/en';
+import { useRealtimeProducts } from '@modules/product/hooks/useRealtimeProducts';
 import { IProduct } from '@modules/product/types';
 
 interface IProps {
-    products: IProduct[];
+    initialProducts: IProduct[];
 }
 
-const t = en.productsTable;
-
-export const ProductsTable: FC<IProps> = ({ products }) => {
+export const ProductsTable: FC<IProps> = ({ initialProducts }) => {
+    const t = useTranslations('productsTable');
+    const products = useRealtimeProducts(initialProducts);
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
     const [deletingProduct, setDeletingProduct] = useState<IProduct | null>(null);
 
-    const columns = getProductColumns({
+    const columns = getProductColumns(t, {
         onEdit: setEditingProduct,
         onDelete: setDeletingProduct,
     });
@@ -30,7 +31,7 @@ export const ProductsTable: FC<IProps> = ({ products }) => {
                 columns={columns}
                 rows={products}
                 getRowKey={(product: IProduct) => product.id}
-                emptyMessage={t.emptyMessage}
+                emptyMessage={t('emptyMessage')}
             />
 
             {editingProduct && (

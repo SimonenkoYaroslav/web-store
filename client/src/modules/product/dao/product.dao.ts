@@ -1,8 +1,6 @@
-import { BaseClientDao } from '@core/dao/supabase/BaseClientDao';
+import { BaseDao } from '@modules/common/dao/supabase/BaseDao';
 import { IProduct } from '@modules/product/types';
 
-class ProductClientDao extends BaseClientDao<IProduct> {
+export class ProductDao extends BaseDao<IProduct> {
     protected readonly table = 'products';
 }
-
-export default new ProductClientDao;

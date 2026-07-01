@@ -16,14 +16,14 @@ import {
     CircularProgress,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { FC } from 'react';
+import { useTranslations } from 'next-intl';
+import { FC, useMemo } from 'react';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 
 import { ImageUpload } from '@common/components';
 import { BillingInterval } from '@modules/product/enums/BillingInterval';
 import { Currency, CURRENCY_SYMBOL } from '@modules/product/enums/Currency';
 import { ProductType } from '@modules/product/enums/ProductType';
-import en from '@modules/product/locales/en';
 import { productService } from '@modules/product/services';
 import { ICreateProduct } from '@modules/product/types';
 
@@ -34,10 +34,10 @@ interface IProps {
     onClose: () => void;
 }
 
-const t = en.addProductModal;
-
 export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
+    const t = useTranslations('addProductModal');
     const router = useRouter();
+    const schema = useMemo(() => createProductSchema(t), [t]);
 
     const {
         register,
@@ -46,7 +46,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
         reset,
         setError,
         formState: { errors, isSubmitting },
-    } = useForm({ resolver: yupResolver(createProductSchema), mode: 'onChange' });
+    } = useForm({ resolver: yupResolver(schema), mode: 'onChange' });
 
     const isSubscription = useWatch({ control, name: 'type' }) === ProductType.Subscription;
 
@@ -61,18 +61,18 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
             handleClose();
             router.refresh();
         } catch (err) {
-            setError('root', { message: err instanceof Error ? err.message : t.serverError });
+            setError('root', { message: err instanceof Error ? err.message : t('serverError') });
         }
     });
 
     return (
         <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-            <DialogTitle>{t.title}</DialogTitle>
+            <DialogTitle>{t('title')}</DialogTitle>
             <form onSubmit={onSubmit}>
                 <DialogContent className="flex flex-col gap-4">
                     <TextField
                         {...register('name')}
-                        label={t.nameLabel}
+                        label={t('nameLabel')}
                         fullWidth
                         size="small"
                         error={!!errors.name}
@@ -84,8 +84,8 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                         control={control}
                         render={({ field, fieldState: { error } }) => (
                             <FormControl fullWidth size="small" error={!!error}>
-                                <InputLabel>{t.typeLabel}</InputLabel>
-                                <Select {...field} label={t.typeLabel} value={field.value ?? ''}>
+                                <InputLabel>{t('typeLabel')}</InputLabel>
+                                <Select {...field} label={t('typeLabel')} value={field.value ?? ''}>
                                     {Object.values(ProductType).map((type) => (
                                         <MenuItem key={type} value={type}>{type}</MenuItem>
                                     ))}
@@ -101,8 +101,8 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                                 <FormControl fullWidth size="small" error={!!error}>
-                                    <InputLabel>{t.billingIntervalLabel}</InputLabel>
-                                    <Select {...field} label={t.billingIntervalLabel} value={field.value ?? ''}>
+                                    <InputLabel>{t('billingIntervalLabel')}</InputLabel>
+                                    <Select {...field} label={t('billingIntervalLabel')} value={field.value ?? ''}>
                                         {Object.values(BillingInterval).map((interval) => (
                                             <MenuItem key={interval} value={interval}>{interval}</MenuItem>
                                         ))}
@@ -116,7 +116,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                     <div className="flex gap-3">
                         <TextField
                             {...register('amount')}
-                            label={t.amountLabel}
+                            label={t('amountLabel')}
                             type="number"
                             size="small"
                             error={!!errors.amount}
@@ -128,8 +128,8 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                                 <FormControl size="small" error={!!error} className="w-32">
-                                    <InputLabel>{t.currencyLabel}</InputLabel>
-                                    <Select {...field} label={t.currencyLabel} value={field.value ?? ''}>
+                                    <InputLabel>{t('currencyLabel')}</InputLabel>
+                                    <Select {...field} label={t('currencyLabel')} value={field.value ?? ''}>
                                         {Object.values(Currency).map((currency) => (
                                             <MenuItem key={currency} value={currency}>
                                                 {CURRENCY_SYMBOL[currency]} {currency}
@@ -154,7 +154,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
 
                 <DialogActions className="px-6 pb-4">
                     <Button onClick={handleClose} disabled={isSubmitting}>
-                        {t.cancelButton}
+                        {t('cancelButton')}
                     </Button>
                     <Button
                         type="submit"
@@ -162,7 +162,7 @@ export const AddProductModal: FC<IProps> = ({ open, onClose }) => {
                         disabled={isSubmitting}
                         startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
                     >
-                        {isSubmitting ? t.submittingLabel : t.submitButton}
+                        {isSubmitting ? t('submittingLabel') : t('submitButton')}
                     </Button>
                 </DialogActions>
             </form>

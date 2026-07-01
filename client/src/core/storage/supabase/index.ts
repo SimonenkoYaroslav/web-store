@@ -1,4 +1,4 @@
-import { createClient } from '@core/clients/supabase/client';
+import { createClient } from '../../clients/supabase/client';
 
 export abstract class StorageService {
     protected abstract readonly bucketId: string;
@@ -42,4 +42,3 @@ export abstract class StorageService {
         if (error) { throw new Error(error.message); }
     }
 }
-

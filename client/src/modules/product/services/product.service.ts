@@ -9,19 +9,23 @@ import productImageService from './product-image.service';
 
 class ProductService {
     async createProduct(data: ICreateProduct): Promise<IProduct> {
-        const createdProduct = await productDao.insert(data);
+        const { image, ...productData } = data;
+        const [file] = image;
 
-        const [file] = data.image as FileList;
+        const createdProduct = await productDao.insert(productData);
         const { publicUrl } = await productImageService.uploadProductImage(createdProduct.id, file);
-        return this.updateProduct({ productId: createdProduct.id, data: { imageUrl: publicUrl } })
+
+        return this.updateProduct({ productId: createdProduct.id, data: { imageUrl: publicUrl } });
     }
 
     async updateProduct(params: IUpdateProductInput): Promise<IProduct> {
         const { data, productId } = params;
-        const { imageUrl } = data
-        await this.assumeUpdatedImage(productId, imageUrl)
+        const { imageUrl, ...rest } = data;
 
-        return productDao.update(data, productId);
+        await this.assumeUpdatedImage(productId, imageUrl);
+
+        const payload = imageUrl === undefined ? rest : { ...rest, image_url: imageUrl };
+        return productDao.update(payload, productId);
     }
 
     async deleteProduct(productId: string): Promise<void> {
@@ -30,13 +34,11 @@ class ProductService {
 
     private async assumeUpdatedImage(productId: string, imageUrl?: string): Promise<void> {
         const product = await productDao.findById(productId);
-        const isImageUpdated = product.image_url !== imageUrl;
+        const isImageReplaced = Boolean(product.image_url) && product.image_url !== imageUrl;
 
-        if (isImageUpdated) {
+        if (isImageReplaced) {
             await productImageService.deleteImageByPath(product.image_url);
         }
-
-        return;
     }
 
     subscribeToChanges(

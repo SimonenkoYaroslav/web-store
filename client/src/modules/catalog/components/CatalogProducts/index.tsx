@@ -15,7 +15,7 @@ export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
     const t = useTranslations('catalogProducts');
     const products = useRealtimeProducts(initialProducts);
 
-    if (initialProducts.length === 0) {
+    if (products.length === 0) {
         return (
             <div className="glass-panel mt-8 py-12 text-center uppercase tracking-wider text-brand-600">
                 {t('noProducts')}

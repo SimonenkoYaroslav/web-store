@@ -9,12 +9,12 @@ class ImageService {
     MIN_IMAGE_WIDTH = 307;
     MIN_IMAGE_HEIGHT = 350;
 
-    hasAllowedFormat(value: unknown): boolean {
+    hasAllowedFormat = (value: unknown): boolean => {
         const file = this.pickFirstFile(value);
         return !file || this.ALLOWED_IMAGE_FORMATS.includes(file.type);
     };
 
-    hasAllowedSize(value: unknown): boolean {
+    hasAllowedSize = (value: unknown): boolean => {
         const file = this.pickFirstFile(value);
         return !file || file.size <= this.MAX_IMAGE_SIZE;
     };
@@ -23,7 +23,7 @@ class ImageService {
         return value instanceof FileList && value.length > 0 ? value[0] : null;
     }
 
-    async hasMinimumDimensions(value: unknown): Promise<boolean> {
+    hasMinimumDimensions = async (value: unknown): Promise<boolean> => {
         const file = this.pickFirstFile(value);
 
         if (!file) { return true; }

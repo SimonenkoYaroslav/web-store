@@ -18,7 +18,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Styling | Tailwind CSS v4 + Material UI v9 (`@mui/material`, `@mui/icons-material`, `@mui/material-nextjs`) |
 | Emotion | `@emotion/react`, `@emotion/styled`, `@emotion/cache` (MUI styling engine) |
 | Auth & DB | Supabase (`@supabase/ssr` 0.10, `@supabase/supabase-js` 2) |
-| Payments | `stripe` v22 (server SDK — client in `src/core/paymentSystem/stripe/server.ts`; provisioning service scaffolded, no checkout flow yet) |
+| Payments | `stripe` v22 (server SDK — client in `src/core/paymentSystem/stripe/server.ts`; subscription provisioning wired via the product module's server actions, no checkout flow yet) |
 | Forms | `react-hook-form` v7 + `yup` v1 + `@hookform/resolvers` v5 |
 | i18n | `next-intl` v4 (App Router). Single locale (`en`), no URL routing yet — see Localisation |
 | HTTP | `axios` (dependency present, not yet used — all data access goes through the Supabase SDK) |
@@ -82,9 +82,9 @@ client/
 │       │                       #   layouts (AuthGuard — client), services (auth.service),
 │       │                       #   types, utils (validateUserAccess, normalizeAllowedAccess), locales
 │       ├── user/               # contexts (UserContext + useUser), components (ProfileCard),
-│       │                       #   dao (user.dao), enums (UserRole), services (user.service — server),
+│       │                       #   enums (UserRole), services (user.service — server),
 │       │                       #   types (IUser), locales
-│       ├── product/            # Full CRUD module + DAO + Stripe/subscription scaffolding — see below
+│       ├── product/            # Full CRUD module + DAO + Stripe subscription provisioning (server actions) — see below
 │       ├── catalog/            # components (CatalogProducts), navigation (catalogNavItems), page, locales
 │       ├── dashboard/          # navigation (dashboardNavItems), pages/dashboard.tsx, locales
 │       └── common/             # App chrome + shared primitives:
@@ -158,6 +158,7 @@ Each module under `src/modules/` follows this internal layout (subfolders presen
 
 ```
 <module>/
+├── actions/         # 'use server' server actions — server-side entry points callable from client code
 ├── components/      # React components ('use client' when they need browser APIs); each owns its own
 │                    #   locales/en.ts (one namespace) next to it
 ├── contexts/        # React context providers + hooks ('use client')
@@ -220,10 +221,10 @@ export default new ProductDao(createClient);
 // a server service:  import productDao from '@modules/product/dao/server';
 ```
 
-The **user** module only barrels the `UserDao` class (`dao/index.ts`) and does **not** pre-bind it — and
-nothing consumes it yet: `user.service.ts` still queries Supabase directly (`client.from('users')…`), so the
-DAO layer is currently exercised only by `product`. Services depend on DAOs and supply the client factory; DAOs
-depend only on the abstract `SupabaseClient` API.
+The **user** module has no DAO: `user.service.ts` still queries Supabase directly (`client.from('users')…`),
+so the DAO layer is currently exercised only by `product` — route user queries through a `UserDao` extending
+`BaseDao<IUser>` (bound like `product/dao/server.ts`) if you touch that service. Services depend on DAOs and
+supply the client factory; DAOs depend only on the abstract `SupabaseClient` API.
 
 ### Service pattern
 
@@ -400,8 +401,8 @@ Prefer going through a DAO/service rather than calling `createClient` directly i
 `postgres_changes` channel on `public:products`; the `useRealtimeProducts(initialProducts)` hook seeds
 from the server-rendered list and applies INSERT/UPDATE/DELETE on top (UPDATE matters because product
 creation inserts an empty row first, then updates it with the uploaded image URL). RLS governs delivery
-via the public `select` policy. **Note:** the hook is currently commented out in `CatalogProducts`, so the
-catalog renders the static server list — wire it back in to make the grid live.
+via the public `select` policy. The hook is wired into both `CatalogProducts` (catalog grid) and
+`ProductsTable` (dashboard table), so both lists apply changes live.
 
 ### Storage
 
@@ -470,8 +471,12 @@ from the validated `@core/env` (so a missing `STRIPE_SECRET_KEY` fails fast). Th
 Stripe.js client yet (`@stripe/stripe-js` is not installed).
 
 `product/services/stripe-product.server.service.ts` (`stripeProductService`) wraps pure Stripe Product/Price
-operations (`createSubscriptionProduct`, `updateSubscriptionProduct`, `archiveSubscriptionProduct`) and maps
-the `BillingInterval` enum to Stripe's `month`/`year` wire values. **It has no caller yet** — see Known Bugs.
+operations (`createSubscriptionProduct`, `updateSubscriptionProduct`, `syncSubscriptionPrice`,
+`archiveSubscriptionProduct`) and maps the `BillingInterval` enum to Stripe's `month`/`year` wire values. Its
+only callers are the server actions in `product/actions/stripeSubscription.ts`, which the client
+`productService` invokes from its create/edit/delete flows; each action re-verifies the caller is an
+authenticated admin (Server Actions are reachable via direct POST) and persists any new Stripe ids via the
+server DAO.
 
 ---
 
@@ -492,7 +497,12 @@ The most fully built feature; use it as the reference for new CRUD modules. Publ
 - **services/** — `product.service.ts` (client: create/update/delete via DAO, Realtime subscription, image
   cleanup), `get-product.service.ts` (server: `fetchProducts` via `productDao.findAll`),
   `product-image.service.ts` (client: image upload/delete), `stripe-product.server.service.ts` (server:
-  Stripe provisioning, not yet wired). Barrel exports only `productService` + `productImageService`.
+  Stripe provisioning, called only by the `actions/` server actions). Barrel exports only `productService` +
+  `productImageService`.
+- **actions/** — `stripeSubscription.ts` (`'use server'`): the bridge between the client `productService`
+  and the server-only Stripe SDK — `syncStripeSubscription` (idempotent provision/re-price, used by
+  create + edit), `deprovisionStripeSubscription` (Subscription → Single edit), `archiveStripeSubscription`
+  (delete). Every action re-verifies the caller is an authenticated admin before touching Stripe.
 - **types/** — `IProduct`, `ICreateProduct`, `IUpdateProduct`, `IUpdateProductInput`.
 - **enums/** — `ProductType` (`Single` | `Subscription`), `BillingInterval` (`Monthly` | `Yearly`),
   `Currency` (`USD` | `EUR` | `GBP`) + `CURRENCY_SYMBOL` map.
@@ -591,49 +601,30 @@ installed; prettier defaults are 2-space and would churn this 4-space codebase �
 
 Fix these when you touch the relevant file; don't replicate the patterns.
 
-1. **Product update writes a camelCase column** — `IUpdateProduct.imageUrl` is passed straight through
-   `productService.updateProduct` → `productDao.update(data, id)`, which uses the object keys as
-   column names. The actual column is `image_url` (snake_case). [Likely] this makes the post-create image
-   update (and any image edit) fail/no-op. Map `imageUrl` → `image_url` in the service or DAO.
-
-2. **`EditProductModal` save is a stub** — `EditProductModal/utils/updateProduct.ts` has an empty body
-   (declares `imageUrl` and returns nothing). Submitting the edit form calls it but performs no update.
-   Implement it (mirror `productService.updateProduct` + the image-replace flow) before relying on edits.
-
-3. **Stripe subscription provisioning is not wired** — `stripeProductService` exists but has no caller;
-   `stripe-subscription.service.ts` is an empty file; the `createStripeSubscription` action its comments
-   reference does not exist (`app/api/` and server actions are absent). `productService.createProduct` only
-   inserts into Supabase, so `stripe_product_id`/`stripe_price_id` stay `null` and Subscription products are
-   never created in Stripe.
-
-4. **Deleting a product orphans its image** — `productService.deleteProduct` now only calls
-   `productDao.delete(id)`; the old storage-folder cleanup was dropped. Removed products leave their
-   `product-image/<id>/...` files in the bucket. Re-add cleanup (via `productImageService`) on delete.
-
-5. **`BaseDao.findAll` ignores pagination** — it accepts `IGetPaginatedData` (`page`, `pageSize`)
+1. **`BaseDao.findAll` ignores pagination** — it accepts `IGetPaginatedData` (`page`, `pageSize`)
    but only applies `.order()`, never `.range()`. `getProductService.fetchProducts` passes `pageSize: 100`
    with no effect; all rows are returned. Implement `.range()` if real pagination is needed.
 
-6. **Realtime is dormant on the catalog** — `useRealtimeProducts` is imported but commented out in
-   `CatalogProducts` (renders static `initialProducts`); the dashboard table doesn't use it either. Wire
-   the hook in to make lists live.
-
-7. **Typo in `CookieKey` filename** — the file is `CookieyKey.ts` (extra `y`); the enum inside is correctly
+2. **Typo in `CookieKey` filename** — the file is `CookieyKey.ts` (extra `y`); the enum inside is correctly
    named `CookieKey`. Import from `@common/enums/CookieyKey` until renamed. (The cookie-based access-token
    flow it was built for is largely unused.)
 
-8. **Duplicate enums** — `AccessType` and `UserRole` are identical (`'Admin' | 'User'`).
+3. **Duplicate enums** — `AccessType` and `UserRole` are identical (`'Admin' | 'User'`).
    `validateUserAccess` casts a `UserRole` to `AccessType` (`as unknown as AccessType`). Consider collapsing
    to one.
 
-9. **`SignUpForm` uses soft `router.push` after sign-up** — fine when sign-up returns no session (redirect
+4. **`SignUpForm` uses soft `router.push` after sign-up** — fine when sign-up returns no session (redirect
    to `/login`), but if email confirmation is disabled and a session is returned, `router.push('/catalog')`
    hits the stale-`UserContext` problem described in Auth Layer 3. Prefer a hard navigation when a session
    exists.
 
-10. **Dead `@utils/*` alias** — the `@utils/*` alias resolves to a deleted directory (`utils/` is gone; the
-    now-`src/core/utils` folder was also removed). `src/modules/common/index.ts` no longer exists either —
-    `common` is imported by full path (see Module structure).
+5. **Dead `@utils/*` alias** — the `@utils/*` alias resolves to a deleted directory (`utils/` is gone; the
+   now-`src/core/utils` folder was also removed). `src/modules/common/index.ts` no longer exists either —
+   `common` is imported by full path (see Module structure).
+
+6. **Unadopted abstractions** — `FormInput` (`@common/components`) and `useModal` (`@common/hooks`) have no
+   consumers, and `user.service.ts` bypasses the DAO layer (queries Supabase directly; the user module has no
+   DAO). Adopt these patterns where live code hand-rolls the same thing — don't add parallel implementations.
 
 ---
 
@@ -655,9 +646,10 @@ You are my advisor, not my assistant. Your job is accuracy, not agreement. Follo
 
 ## What Is Not Yet Implemented
 
-- Stripe checkout / payment flow (server Stripe client + provisioning service exist, but no checkout
-  sessions, webhooks, server action wiring, or browser Stripe.js).
-- API routes (`app/api/` does not exist) and server actions (`'use server'`).
+- Stripe checkout / payment flow (the server Stripe client, provisioning service, and the product
+  `stripeSubscription` server actions exist, but no checkout sessions, webhooks, or browser Stripe.js).
+- API routes (`app/api/` does not exist). Server actions exist only for Stripe subscription provisioning
+  (`src/modules/product/actions/stripeSubscription.ts`).
 - Cart / orders (no UI, services, or tables).
 - Password reset flow.
 - Locale switching UI/catalog (the cookie-based negotiation now exists — `locale.service.ts`
@@ -667,3 +659,44 @@ You are my advisor, not my assistant. Your job is accuracy, not agreement. Follo
 - Global state management beyond `UserContext` (no Redux/Zustand).
 - `@static` target and a `utils/` directory for `@utils/*` (aliases reserved/dangling, directories absent).
 - Tests (no jest setup or specs; jest/strict-null-checks ESLint rules deliberately not migrated).
+
+
+# CLAUDE.md — Project Rules
+
+## Language
+- Communication with the user — **English**.
+- Code, code comments, commit messages, variable/function names — **English**.
+
+## Task routing across subagents (cost optimization)
+Before doing a task yourself, evaluate it and delegate if it fits:
+
+| Task type | Agent | Model |
+|---|---|---|
+| Code search, file reading, grep/ls, exploring the repo without changes | `scout` | Haiku |
+| Mechanical edits: renames, formatting, simple refactors, running builds/tests | `worker` | Sonnet |
+| Investigating an approach/architecture without making changes | built-in `Explore` | — |
+| Planning before implementation | built-in `Plan` | — |
+| Non-standard/creative/multi-step tasks | `general-purpose` | — |
+
+Rule: if a task can be solved with a cheap model (Haiku) — delegate to `scout`.
+If files need to be written but the logic is trivial — `worker`.
+Handle in the main session only what genuinely requires reasoning, solution design, or judgment calls.
+
+## Forbidden actions (hard restriction)
+Never execute yourself:
+- `rm`, `del`, `rmdir`, `format` (and equivalents: `Remove-Item`, `rd /s`, `mkfs`, etc.)
+
+If files/directories need to be deleted — **inform the user** which paths to delete and why;
+the user deletes them manually via PowerShell.
+
+## Notifications
+On completion of a long task or session — call `notify/send.py` (see `Stop` / `SubagentStop`
+hooks in `.claude/settings.json`) to send a ping to Telegram.
+
+## Memory
+Automatic memory is kept in `MEMORY.md` (see separate file), organized into topic sections.
+Before starting work on a familiar topic — check the corresponding section of `MEMORY.md`.
+
+## Session working style
+- Effort: **xhigh**
+- Mode: **ultracode**

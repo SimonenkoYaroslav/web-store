@@ -2,19 +2,21 @@
 
 import LogoutIcon from '@mui/icons-material/Logout'
 import { Avatar, Tooltip } from '@mui/material'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
-import { authService } from '@modules/auth/services'
+import { SignOutButton } from '@modules/auth/components'
 import { useUser } from '@modules/user'
 
 interface IProps {
     isOpen: boolean
 }
 
+const SIGN_OUT_CLASSES =
+    'w-full flex items-center gap-2 px-3 py-2 border-2 border-transparent uppercase tracking-wider text-sm ' +
+    'text-brand-200 hover:border-brand-700 hover:bg-brand-800 hover:text-red-300 transition-colors duration-150'
+
 export const ProfileCard = ({ isOpen }: IProps) => {
     const t = useTranslations('profileCard')
-    const router = useRouter();
     const { user } = useUser()
 
     const initials = user
@@ -44,22 +46,17 @@ export const ProfileCard = ({ isOpen }: IProps) => {
                             <p className="text-xs uppercase tracking-wider text-gold-300 truncate">{user?.role}</p>
                         </div>
                     </div>
-                    <form onSubmit={() => {
-                        authService.signOut();
-                        router.refresh();
-                    }} method="POST">
-                        <button
-                            type="submit"
-                            className="w-full flex items-center gap-2 px-3 py-2 border-2 border-transparent uppercase tracking-wider text-sm text-brand-200 hover:border-brand-700 hover:bg-brand-800 hover:text-red-300 transition-colors duration-150"
-                        >
-                            <LogoutIcon sx={{ fontSize: 16 }} />
-                            {t('logOut')}
-                        </button>
-                    </form>
+                    <SignOutButton className={SIGN_OUT_CLASSES}>
+                        <LogoutIcon sx={{ fontSize: 16 }} />
+                        {t('logOut')}
+                    </SignOutButton>
                 </div>
             ) : (
                 <Tooltip title={user ? `${user.firstName} ${user.lastName}` : ''} placement="right">
-                    <Avatar variant="square" sx={{ ...avatarSx, width: 32, height: 32, fontSize: '0.75rem', cursor: 'pointer' }}>
+                    <Avatar
+                        variant="square"
+                        sx={{ ...avatarSx, width: 32, height: 32, fontSize: '0.75rem', cursor: 'pointer' }}
+                    >
                         {initials}
                     </Avatar>
                 </Tooltip>

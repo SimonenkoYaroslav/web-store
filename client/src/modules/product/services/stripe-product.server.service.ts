@@ -2,33 +2,18 @@ import type Stripe from 'stripe';
 
 import { stripe } from '@core/paymentSystem/stripe/server';
 import { BillingInterval } from '@modules/product/enums/BillingInterval';
+import {
+    ICreateSubscriptionProductParams,
+    IStripeProductReferences,
+    ISyncSubscriptionPriceParams,
+} from '@modules/product/types/stripeProduct';
 
-interface ICreateSubscriptionProductParams {
-    name: string;
-    amount: number;
-    currency: string;
-    interval: BillingInterval;
-}
-
-interface IStripeProductReferences {
-    stripeProductId: string;
-    stripePriceId: string;
-}
-
-// Maps our BillingInterval enum to Stripe's recurring interval wire values,
-// keeping the rest of the app decoupled from Stripe's vocabulary.
 const STRIPE_INTERVAL: Record<BillingInterval, Stripe.PriceCreateParams.Recurring['interval']> = {
     [BillingInterval.Monthly]: 'month',
     [BillingInterval.Yearly]: 'year',
 };
 
-// Server-only base layer for managing the Stripe side of subscription products.
-// Pure Stripe operations: it never touches Supabase — callers (e.g. the
-// createStripeSubscription action) persist the returned ids. Import by full path
-// from Server Components / Route Handlers / actions only (it pulls in the
-// server-only Stripe client via @core/stripe/server).
 class StripeProductService {
-    // Creates a Stripe Product and a recurring Price for it, returning both ids.
     async createSubscriptionProduct(
         params: ICreateSubscriptionProductParams,
     ): Promise<IStripeProductReferences> {
@@ -44,22 +29,43 @@ class StripeProductService {
         return { stripeProductId: product.id, stripePriceId: price.id };
     }
 
-    // Updates mutable Product fields. Prices are immutable in Stripe, so changing
-    // amount/currency/interval means creating a new Price and re-pointing the
-    // product row at it — out of scope for this base layer.
     async updateSubscriptionProduct(stripeProductId: string, name: string): Promise<void> {
         await stripe.products.update(stripeProductId, { name });
     }
 
-    // Soft-deletes by deactivating the Product (Stripe products cannot be hard
-    // deleted once they have a price). Use this when the local product is removed.
+    async syncSubscriptionPrice(params: ISyncSubscriptionPriceParams): Promise<string> {
+        const currency = params.currency.toLowerCase();
+        const unitAmount = this.toMinorUnits(params.amount);
+        const targetInterval = STRIPE_INTERVAL[params.interval];
+
+        const current = await stripe.prices.retrieve(params.stripePriceId);
+
+        const isUnchanged =
+            current.unit_amount === unitAmount &&
+            current.currency === currency &&
+            current.recurring?.interval === targetInterval;
+
+        if (isUnchanged) {
+            return params.stripePriceId;
+        }
+
+        const price = await stripe.prices.create({
+            product: params.stripeProductId,
+            currency,
+            unit_amount: unitAmount,
+            recurring: { interval: targetInterval },
+        });
+
+        await stripe.products.update(params.stripeProductId, { default_price: price.id });
+        await stripe.prices.update(params.stripePriceId, { active: false });
+
+        return price.id;
+    }
+
     async archiveSubscriptionProduct(stripeProductId: string): Promise<void> {
         await stripe.products.update(stripeProductId, { active: false });
     }
 
-    // Stripe expects amounts in the currency's minor unit (e.g. cents). This
-    // assumes a 2-decimal currency; zero-decimal currencies (JPY, etc.) are not
-    // yet handled.
     private toMinorUnits(amount: number): number {
         return Math.round(amount * 100);
     }

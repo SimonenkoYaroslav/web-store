@@ -12,5 +12,4 @@ export interface IUpdateProduct {
 export interface IUpdateProductInput {
     productId: string;
     data: IUpdateProduct;
-    isImageUpdated?: string;
 }

@@ -1,14 +1,10 @@
-import { InferType } from 'yup';
-
-import { createEditProductSchema } from '@modules/product/components/EditProductModal/schemas/editProduct.schema';
-
-type EditProductFormData = InferType<ReturnType<typeof createEditProductSchema>>;
+import { productService } from '@modules/product/services';
+import { IEditProduct } from '@modules/product/types';
 
 export const updateProduct = async (
     productId: string,
-    data: EditProductFormData,
+    data: IEditProduct,
     hasNewImage: boolean,
-) => {
-    let imageUrl: string | undefined;
- 
+): Promise<void> => {
+    await productService.editProduct(productId, data, hasNewImage);
 };

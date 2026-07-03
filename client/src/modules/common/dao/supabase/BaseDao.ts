@@ -47,13 +47,14 @@ export abstract class BaseDao<Entity> {
         );
     }
 
-    async update<Type extends { [K in Exclude<keyof Entity, string | number | symbol>]: never; }>(
-        params: Type,
-        id: string,
-    ): Promise<Entity> {
+    async update(params: Partial<Entity>, id: string): Promise<Entity> {
         const client = await this.getClient();
+
+        // postgrest-js's excess-property check can't be proven for an unresolved
+        // generic, so the payload is cast on this single Supabase-facing line;
+        // callers are still held to Partial<Entity> (real column names) above.
         return this.unwrap(
-            await client.from(this.table).update<Type>(params).eq('id', id).select<'*', Entity>('*').single(),
+            await client.from(this.table).update(params as never).eq('id', id).select<'*', Entity>('*').single(),
         );
     }
 

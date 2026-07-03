@@ -11,6 +11,7 @@ import { useTranslations } from 'next-intl';
 import { FC, useTransition, useState } from 'react';
 
 import { Button } from '@common/components';
+import { productService } from '@modules/product/services';
 
 interface IProps {
     open: boolean;
@@ -19,7 +20,7 @@ interface IProps {
     onClose: () => void;
 }
 
-export const DeleteProductModal: FC<IProps> = ({ open, productId: _productId, productName, onClose }) => {
+export const DeleteProductModal: FC<IProps> = ({ open, productId, productName, onClose }) => {
     const t = useTranslations('deleteProductModal');
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -28,6 +29,7 @@ export const DeleteProductModal: FC<IProps> = ({ open, productId: _productId, pr
     const handleDelete = () => {
         startTransition(async () => {
             try {
+                await productService.deleteProduct(productId);
                 onClose();
                 router.refresh();
             } catch (err) {

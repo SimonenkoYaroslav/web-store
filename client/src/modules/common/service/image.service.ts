@@ -1,7 +1,4 @@
-export interface IImageDimensions {
-    width: number;
-    height: number;
-}
+import { IImageDimensions } from '@modules/common/types/imageDimensions';
 
 class ImageService {
     ALLOWED_IMAGE_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];

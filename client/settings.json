@@ -1,0 +1,42 @@
+{
+  "plugins": {
+    "marketplace": [
+      "superpowers",
+      "telegram",
+      "context7",
+      "github",
+      "playwright",
+      "code-review",
+      "frontend-design",
+      "skill-creator"
+    ]
+  },
+
+  "permissions": {
+    "deny": [
+      "Bash(rm *)",
+      "Bash(rm -rf *)",
+      "Bash(del *)",
+      "Bash(rmdir *)",
+      "Bash(format *)",
+      "Bash(Remove-Item *)",
+      "Bash(rd /s *)",
+      "Bash(mkfs*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(git reset --hard*)"
+    ]
+  },
+
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/statusline.js"
+  },
+
+
+  "env": {
+    "CLAUDE_EFFORT": "xhigh",
+    "CLAUDE_MODE": "ultracode"
+  }
+}

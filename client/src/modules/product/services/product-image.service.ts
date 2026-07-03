@@ -16,6 +16,17 @@ class ProductImageService extends StorageService {
     async deleteImageByPath(filePath: string): Promise<void> {
         return this.deleteFile(filePath);
     }
+
+    async deleteImageByUrl(imageUrl: string): Promise<void> {
+        return this.deleteFile(this.getPathFromUrl(imageUrl));
+    }
+
+    private getPathFromUrl(imageUrl: string): string {
+        const marker = `/public/${this.bucketId}/`;
+        const markerIndex = imageUrl.indexOf(marker);
+
+        return markerIndex === -1 ? imageUrl : imageUrl.slice(markerIndex + marker.length);
+    }
 }
 
 export default new ProductImageService;

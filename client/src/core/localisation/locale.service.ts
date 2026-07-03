@@ -4,7 +4,6 @@ import { CookieKey } from '@common/enums/CookieyKey';
 
 import { Locale, resolveLocale } from './locales';
 
-
 export const getLocale = async (): Promise<Locale> => {
     const cookieStore = await cookies();
 

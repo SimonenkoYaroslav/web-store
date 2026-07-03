@@ -2,11 +2,7 @@
 
 import { useCallback, useState } from 'react'
 
-interface IUseModal {
-    isOpen: boolean
-    showModal: () => void
-    hideModal: () => void
-}
+import { IUseModal } from '@modules/common/types/useModal'
 
 export const useModal = (initialOpen = false): IUseModal => {
     const [isOpen, setIsOpen] = useState(initialOpen)

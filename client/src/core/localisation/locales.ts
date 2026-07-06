@@ -1,5 +1,3 @@
-import { getEnabled } from '@common/enums/GetEnabled';
-
 export enum Locale {
     EN = 'en',
 }
@@ -7,6 +5,11 @@ export enum Locale {
 export const LOCALE_CONFIG: Record<Locale, boolean> = {
     [Locale.EN]: true,
 };
+
+const getEnabled = <Values extends string>(config: Record<Values, boolean>): Values[] =>
+    Object.entries(config)
+        .filter(([, enabled]) => enabled)
+        .map(([value]) => value as Values);
 
 export const ENABLED_LOCALES = getEnabled(LOCALE_CONFIG);
 

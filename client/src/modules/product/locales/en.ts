@@ -2,6 +2,7 @@ import addProductButton from '@modules/product/components/AddProductButton/local
 import addProductModal from '@modules/product/components/AddProductModal/locales/en';
 import deleteProductModal from '@modules/product/components/DeleteProductModal/locales/en';
 import editProductModal from '@modules/product/components/EditProductModal/locales/en';
+import productFormFields from '@modules/product/components/ProductFormFields/locales/en';
 import productsTable from '@modules/product/components/ProductsTable/locales/en';
 
 const en = {
@@ -9,6 +10,7 @@ const en = {
     ...addProductModal,
     ...deleteProductModal,
     ...editProductModal,
+    ...productFormFields,
     ...productsTable,
 } as const;
 

@@ -9,6 +9,8 @@ import {
 } from '@mui/material';
 import { ReactNode } from 'react';
 
+import EmptyState from '@common/components/EmptyState';
+
 export interface IColumn<T> {
     key: string;
     header: ReactNode;
@@ -32,11 +34,7 @@ interface IDataTableProps<T> {
  */
 function DataTable<T>({ columns, rows, getRowKey, emptyMessage = 'No data found.' }: IDataTableProps<T>) {
     if (rows.length === 0) {
-        return (
-            <div className="glass-panel py-12 text-center uppercase tracking-wider text-brand-600">
-                {emptyMessage}
-            </div>
-        );
+        return <EmptyState message={emptyMessage} />;
     }
 
     return (

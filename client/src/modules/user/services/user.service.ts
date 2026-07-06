@@ -1,4 +1,5 @@
 import { createClient } from '@core/clients/supabase/server';
+import userDao from '@modules/user/dao/server';
 import { IUser } from '@modules/user/types/user';
 
 class UserService {
@@ -10,9 +11,13 @@ class UserService {
             return null;
         }
 
-        const { data } = await client.from('users').select<'*', IUser>('*').eq('id', user.id).single();
-        return data;
-    };
+
+        try {
+            return await userDao.findById(user.id);
+        } catch {
+            return null;
+        }
+    }
 }
 
 export default new UserService;

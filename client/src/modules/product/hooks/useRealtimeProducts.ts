@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 
-import { productService } from '@modules/product/services';
+import { productRealtimeService } from '@modules/product/services';
 import { IProduct } from '@modules/product/types';
 
 export const useRealtimeProducts = (initialProducts: IProduct[]): IProduct[] => {
     const [products, setProducts] = useState<IProduct[]>(initialProducts);
 
     useEffect(() => {
-        const unsubscribe = productService.subscribeToChanges((payload) => {
+        const unsubscribe = productRealtimeService.subscribeToChanges((payload) => {
             setProducts((current) => {
                 switch (payload.eventType) {
                     case 'INSERT': {

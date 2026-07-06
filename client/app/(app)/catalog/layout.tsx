@@ -1,7 +1,7 @@
 import { FC } from "react"
 
-import { AccessType } from "@modules/auth/enums/AccessType"
 import { MainLayout } from "@modules/common/layouts/MainLayout"
+import { UserRole } from "@modules/user/enums/UserRole"
 
 interface IProps {
     children: React.ReactNode
@@ -9,7 +9,7 @@ interface IProps {
 
 const CatalogLayout: FC<IProps> = ({ children }) => {
     return (
-        <MainLayout access={[AccessType.USER, AccessType.ADMIN]}>{children} </MainLayout>
+        <MainLayout access={[UserRole.USER, UserRole.ADMIN]}>{children} </MainLayout>
     )
 }
 

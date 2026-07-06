@@ -56,10 +56,10 @@ client/
 │   │   └── register/page.tsx   # renders <SignUpForm>
 │   └── (app)/                  # Authenticated area (each route guards itself via MainLayout)
 │       ├── catalog/
-│       │   ├── layout.tsx      # <MainLayout access={[AccessType.USER, AccessType.ADMIN]}>
+│       │   ├── layout.tsx      # <MainLayout access={[UserRole.USER, UserRole.ADMIN]}>
 │       │   └── page.tsx        # CatalogPage (server): fetches products, renders <CatalogProducts>
 │       ├── dashboard/
-│       │   ├── layout.tsx      # <MainLayout access={AccessType.ADMIN}>
+│       │   ├── layout.tsx      # <MainLayout access={UserRole.ADMIN}>
 │       │   ├── loading.tsx
 │       │   └── page.tsx        # DashboardPage (server): fetches products, renders table + add button
 │       └── forbidden/page.tsx
@@ -78,27 +78,28 @@ client/
 │   │                           #   messages.ts (merged catalog + getMessages + Messages type),
 │   │                           #   request.ts (getRequestConfig), intl.d.ts (AppConfig types). See Localisation.
 │   └── modules/                # Feature modules; each is self-contained (see Module structure)
-│       ├── auth/               # components (LogInForm, SignUpForm, SignOutButton), enums (AccessType),
-│       │                       #   layouts (AuthGuard — client), services (auth.service),
-│       │                       #   types, utils (validateUserAccess, normalizeAllowedAccess), locales
+│       ├── auth/               # components (LogInForm, SignUpForm, SignOutButton, AuthFormCard),
+│       │                       #   layouts (AuthGuard — client), types, locales,
+│       │                       #   services (auth.service; access.service — pure role/access checks)
 │       ├── user/               # contexts (UserContext + useUser), components (ProfileCard),
-│       │                       #   enums (UserRole), services (user.service — server),
+│       │                       #   dao (user.dao + server-bound singleton in dao/server.ts),
+│       │                       #   enums (UserRole — the single role/access enum), services (user.service — server),
 │       │                       #   types (IUser), locales
 │       ├── product/            # Full CRUD module + DAO + Stripe subscription provisioning (server actions) — see below
 │       ├── catalog/            # components (CatalogProducts), navigation (catalogNavItems), page, locales
 │       ├── dashboard/          # navigation (dashboardNavItems), pages/dashboard.tsx, locales
 │       └── common/             # App chrome + shared primitives:
-│           ├── components/     # Shared UI primitives (Button, DataTable, FormInput, ImageUpload,
+│           ├── components/     # Shared UI primitives (Button, DataTable, EmptyState, ImageUpload,
 │           │                   #   Loading, NavLink, Skeleton, TableSkeleton, GradientBackground) + Navbar
 │           ├── config/         # App-wide constants (DEFAULT_PAGINATION)
 │           ├── dao/supabase/   # BaseDao — single abstract data-access base (client injected, see DAO layer)
-│           ├── enums/          # CookieKey (in CookieyKey.ts — see Known Bugs), SortOrder,
-│           │                   #   GetEnabled.ts (the getEnabled config-collapse helper — a fn, not an enum)
+│           ├── enums/          # CookieKey, SortOrder
 │           ├── hooks/          # useModal
 │           ├── layouts/        # MainLayout
 │           ├── pages/          # ErrorPage
 │           ├── service/        # Shared singleton services (note: singular folder):
-│           │                   #   formatting.service (formatDate), image.service (image validation/dimensions)
+│           │                   #   formatting.service (formatDate), image.service (image validation/dimensions),
+│           │                   #   navigation.service (filters nav items by role via accessService)
 │           ├── theme/          # ThemeRegistry (client) + theme.ts (MUI theme)
 │           └── types/          # INavItem (navigation.ts), IGetPaginatedData (paginatedData.ts)
 ├── scripts/
@@ -133,8 +134,9 @@ If you remember the old layout, these moved — update any stale imports you fin
 - `src/modules/product/utils/*` → `src/modules/common/service/*`: `formatDate` became `formattingService.formatDate`
   (`formatting.service.ts`) and the image validation/dimension helpers became `imageService` (`image.service.ts`).
   The `src/modules/product/utils/` directory is deleted.
-- `src/core/utils/getEnabled.ts` → `src/modules/common/enums/GetEnabled.ts` (import `getEnabled` via `@common/enums/GetEnabled`).
-  The `src/core/utils/` directory is deleted.
+- `src/core/utils/getEnabled.ts` → briefly `src/modules/common/enums/GetEnabled.ts`, now a **private** helper
+  inside `src/core/localisation/locales.ts` (nothing exports `getEnabled` anymore). The `src/core/utils/`
+  directory is deleted.
 - The top-level `utils/` directory is deleted. The `@utils/*` alias still exists in `tsconfig.json`/eslint but resolves to nothing — treat it as dead until a `utils/` dir comes back.
 
 ### Where new code goes
@@ -160,7 +162,9 @@ Each module under `src/modules/` follows this internal layout (subfolders presen
 <module>/
 ├── actions/         # 'use server' server actions — server-side entry points callable from client code
 ├── components/      # React components ('use client' when they need browser APIs); each owns its own
-│                    #   locales/en.ts (one namespace) next to it
+│                    #   locales/en.ts (one namespace) next to it. Components with non-trivial behavior
+│                    #   split markup (index.tsx) from logic in a co-located useLogic.ts hook
+│                    #   (see AddProductModal / EditProductModal)
 ├── contexts/        # React context providers + hooks ('use client')
 ├── dao/             # Data-access objects (thin Entity-typed wrappers over a Base*Dao)
 ├── enums/           # String enums
@@ -169,16 +173,18 @@ Each module under `src/modules/` follows this internal layout (subfolders presen
 ├── locales/en.ts    # Merges this module's per-component locales (no literal strings; merged into the app dictionary)
 ├── navigation/      # Nav item definitions (INavItem[])
 ├── pages/           # Page-level server components composed by app/ routes
-├── services/        # Business logic; classes exported as singletons via `export default new MyService`
-├── types/           # TypeScript interfaces (I prefix: IUser, ISignIn)
-└── utils/           # Pure functions, no side effects
+├── services/        # Business logic AND pure helpers; classes exported as singletons via
+│                    #   `export default new MyService` — there is deliberately no utils/ folder:
+│                    #   loose helper functions live as methods on a module service
+│                    #   (see access.service, product-format.service)
+└── types/           # TypeScript interfaces (I prefix: IUser, ISignIn)
 ```
 
 Modules expose a public API through an `index.ts` barrel — prefer importing from the barrel
 (`@modules/product`) over internal files, except where a file is explicitly server-only or imported by
 full path by convention (e.g. `get-product.service.ts`, `stripe-product.server.service.ts`). `common` has
 **no** barrel at all — import its targets by full path (`@common/components`, `@common/service/formatting.service`,
-`@common/enums/GetEnabled`, …). Note `common` also names its services folder `service/` (singular), unlike the
+`@common/enums/CookieKey`, …). Note `common` also names its services folder `service/` (singular), unlike the
 `services/` convention feature modules use.
 
 ### DAO layer (data access)
@@ -221,10 +227,12 @@ export default new ProductDao(createClient);
 // a server service:  import productDao from '@modules/product/dao/server';
 ```
 
-The **user** module has no DAO: `user.service.ts` still queries Supabase directly (`client.from('users')…`),
-so the DAO layer is currently exercised only by `product` — route user queries through a `UserDao` extending
-`BaseDao<IUser>` (bound like `product/dao/server.ts`) if you touch that service. Services depend on DAOs and
-supply the client factory; DAOs depend only on the abstract `SupabaseClient` API.
+The **user** module mirrors this on the server side only: `dao/server.ts` pre-binds `new UserDao(createClient)`
+with the server factory, and `user.service.ts` reads the profile row via `userDao.findById` (auth itself —
+`client.auth.getUser()` — stays on the Supabase client, since DAOs cover table CRUD only). Services depend on
+DAOs and supply the client factory; DAOs depend only on the abstract `SupabaseClient` API. The
+`SupabaseClientFactory` type lives in `@core/clients/supabase/types` (re-exported by `BaseDao` for
+convenience) and is shared with `StorageService`.
 
 ### Service pattern
 
@@ -273,7 +281,7 @@ in mind when debugging redirects.
   `<AuthGuard access={...}><div><Navbar />{children}</div></AuthGuard>`.
 - Reads the user from `useUser()` (the `UserContext`), **not** from cookies.
 - `user === null` → `redirect('/login')`; access mismatch → `redirect('/forbidden')`.
-- Access is checked with `validateUserAccess(user.role, normalizeAllowedAccess(access))`.
+- Access is checked with `accessService.canAccess(user.role, access)` (`@modules/auth/services`).
 
 **UserContext** (`@modules/user` → `contexts/UserContext`): the root layout server-fetches the current
 user once and feeds it to `UserContextProvider`. Because the root layout does **not** re-run on soft
@@ -295,7 +303,7 @@ Localisation runs on **`next-intl` v4**, fed by the **per-component English dict
   exposes `catalogPage`).
 - Each **module** re-collects its own components' locales into `locales/en.ts` — that file no longer holds
   literal strings, it just imports the component dictionaries and spread-merges them (e.g.
-  `product/locales/en.ts` merges the five product component `en`s; `common/locales/en.ts` merges
+  `product/locales/en.ts` merges the six product component `en`s; `common/locales/en.ts` merges
   `ImageUpload`, `Navbar`, and `ErrorPage`). Add cross-directory imports via a path alias (relative `../`
   parent imports are an ESLint error).
 - `src/modules/index.ts` spread-merges every module's merged `en` into `rootModule.locales.en` (no component
@@ -309,7 +317,7 @@ Localisation runs on **`next-intl` v4**, fed by the **per-component English dict
 **The runtime wiring (all under `src/core/localisation/`):**
 
 - `locales.ts` — the `Locale` enum + `LOCALE_CONFIG` allow-map, `ENABLED_LOCALES` (derived via the
-  `getEnabled` helper in `@common/enums/GetEnabled`), and `resolveLocale()` / `isEnabledLocale()` that fall
+  private `getEnabled` helper inside `locales.ts`), and `resolveLocale()` / `isEnabledLocale()` that fall
   back to `DEFAULT_LOCALE` for anything unsupported.
 - `locale.service.ts` — **server-only**: `getLocale()` reads the requested locale from the `CookieKey.LOCALE`
   cookie (via `next/headers`) and resolves it; `changeLocale(requested)` validates and writes that cookie.
@@ -340,6 +348,10 @@ doesn't have one yet) and read it through `t(...)`.
 `react-hook-form` + `yup`. Schemas live in a `schemas/` subfolder next to the component
 (`signIn.schema.ts`, `createProduct.schema.ts`, …). Auth forms catch service errors into local
 `serverError` state and surface them via a MUI `<Alert>`; product modals use RHF's `setError('root', …)`.
+Both auth forms render their fields inside the shared `AuthFormCard` shell (`auth/components/AuthFormCard`:
+card, brand header, error alert, submit button, footer link). The product Add/Edit modals split behavior
+into a co-located `useLogic.ts` hook and render the shared `ProductFormFields` inside a `<FormProvider>` —
+follow that split (markup in `index.tsx`, behavior in `useLogic.ts`) for new non-trivial components.
 Standard hook setup:
 
 ```typescript
@@ -397,7 +409,7 @@ Prefer going through a DAO/service rather than calling `createClient` directly i
 
 ### Realtime
 
-`products` is in the `supabase_realtime` publication. `productService.subscribeToChanges()` opens a
+`products` is in the `supabase_realtime` publication. `productRealtimeService.subscribeToChanges()` opens a
 `postgres_changes` channel on `public:products`; the `useRealtimeProducts(initialProducts)` hook seeds
 from the server-rendered list and applies INSERT/UPDATE/DELETE on top (UPDATE matters because product
 creation inserts an empty row first, then updates it with the uploaded image URL). RLS governs delivery
@@ -410,8 +422,10 @@ via the public `select` policy. The hook is wired into both `CatalogProducts` (c
   (`protected readonly bucketId = "WebStore"`); the old centralized `constants/storage.ts`
   (`BUCKET_ID`/`BASE_BUCKET_URL`) was removed. Re-centralize under `src/constants/` if a second consumer appears.
 - `src/core/storage/supabase/index.ts` defines the abstract `StorageService` (protected
-  `uploadFile` / `downloadFile` / `getPublicUrl` / `deleteFile` over `this.bucketId`).
-- `product-image.service.ts` extends `StorageService`, pins the bucket, and exposes
+  `uploadFile` / `downloadFile` / `getPublicUrl` / `deleteFile` over `this.bucketId`). Like `BaseDao`, it is
+  context-neutral: it takes a `SupabaseClientFactory` by constructor injection and never imports a client.
+- `product-image.service.ts` extends `StorageService`, binds the browser client factory
+  (`new ProductImageService(createClient)`), pins the bucket, and exposes
   `uploadProductImage(productId, file)` (uploads to `product-image/<productId>/temp_<ts>.<ext>` and
   returns the public URL) and `deleteImageByPath(path)`.
 - `next.config.ts` whitelists the Supabase storage host under `images.remotePatterns` so `next/image`
@@ -473,10 +487,11 @@ Stripe.js client yet (`@stripe/stripe-js` is not installed).
 `product/services/stripe-product.server.service.ts` (`stripeProductService`) wraps pure Stripe Product/Price
 operations (`createSubscriptionProduct`, `updateSubscriptionProduct`, `syncSubscriptionPrice`,
 `archiveSubscriptionProduct`) and maps the `BillingInterval` enum to Stripe's `month`/`year` wire values. Its
-only callers are the server actions in `product/actions/stripeSubscription.ts`, which the client
-`productService` invokes from its create/edit/delete flows; each action re-verifies the caller is an
-authenticated admin (Server Actions are reachable via direct POST) and persists any new Stripe ids via the
-server DAO.
+only caller is `stripe-subscription.server.service.ts` (`stripeSubscriptionService`), which owns the
+provisioning orchestration: it re-verifies the caller is an authenticated admin (Server Actions are reachable
+via direct POST) and persists any new Stripe ids via the server DAO. The `actions/stripeSubscription.ts`
+Server Actions are thin function-shaped delegates to that service (Next.js requires actions to be exported
+async functions), invoked by the client `productService` from its create/edit/delete flows.
 
 ---
 
@@ -486,29 +501,37 @@ The most fully built feature; use it as the reference for new CRUD modules. Publ
 `src/modules/product/index.ts`.
 
 - **components/** — `ProductsTable`, `AddProductButton`, `AddProductModal`, `EditProductModal`,
-  `DeleteProductModal`. Add/Edit modals use the shared `<ImageUpload>` primitive and per-modal yup schemas;
-  `AddProductModal` conditionally shows the billing-interval select for Subscription products.
+  `DeleteProductModal`, plus the internal `ProductFormFields` (not in the barrel): the field set shared by the
+  Add/Edit modals (name, type, conditional billing-interval select behind `withInterval`, amount + currency,
+  `<ImageUpload>`, root error). It reads the form via `useFormContext`, so each modal renders it inside a
+  react-hook-form `<FormProvider>`. Its `schemas/productForm.schema.ts` exports the shared yup field builders
+  (typed against the `productFormFields` locale namespace) that both modal schemas compose and extend.
   `ProductsTable` renders the generic `<DataTable>` primitive (`IColumn<T>[]`); the column set is built by
   `ProductsTable/columns/getProductColumns()`, with one factory file per column
   (`imageColumn`, `nameColumn`, `typeColumn`, `priceColumn`, `createdAtColumn`, `actionsColumn`).
 - **dao/** — `product.dao.ts` exports the `ProductDao` class (extends `BaseDao<IProduct>`); `dao/client.ts`
   and `dao/server.ts` export the pre-bound context singletons (`new ProductDao(createClient)`). Services import
   the one matching their context (`@modules/product/dao/client` / `@modules/product/dao/server`). No `dao/index.ts` barrel.
-- **services/** — `product.service.ts` (client: create/update/delete via DAO, Realtime subscription, image
-  cleanup), `get-product.service.ts` (server: `fetchProducts` via `productDao.findAll`),
+- **services/** — `product.service.ts` (client: create/update/delete via DAO, image cleanup),
+  `product-format.service.ts` (pure: `formatPrice` via `CURRENCY_SYMBOL`),
+  `product-realtime.service.ts` (client: the Realtime `postgres_changes` subscription),
+  `get-product.service.ts` (server: `fetchProducts` via `productDao.findAll`),
   `product-image.service.ts` (client: image upload/delete), `stripe-product.server.service.ts` (server:
-  Stripe provisioning, called only by the `actions/` server actions). Barrel exports only `productService` +
-  `productImageService`.
-- **actions/** — `stripeSubscription.ts` (`'use server'`): the bridge between the client `productService`
-  and the server-only Stripe SDK — `syncStripeSubscription` (idempotent provision/re-price, used by
-  create + edit), `deprovisionStripeSubscription` (Subscription → Single edit), `archiveStripeSubscription`
-  (delete). Every action re-verifies the caller is an authenticated admin before touching Stripe.
+  pure Stripe Product/Price calls) and `stripe-subscription.server.service.ts` (server: admin-asserted
+  provisioning orchestration — the only caller of the former, invoked via `actions/`). Barrel exports
+  `productService`, `productFormatService`, `productImageService` and `productRealtimeService`.
+- **actions/** — `stripeSubscription.ts` (`'use server'`): the client→server transport for Stripe
+  provisioning. Next.js requires Server Actions to be exported async functions, so
+  `syncStripeSubscription` (idempotent provision/re-price, used by create + edit),
+  `deprovisionStripeSubscription` (Subscription → Single edit) and `archiveStripeSubscription` (delete)
+  are one-line delegates to `stripe-subscription.server.service.ts`, which asserts the caller is an admin.
 - **types/** — `IProduct`, `ICreateProduct`, `IUpdateProduct`, `IUpdateProductInput`.
 - **enums/** — `ProductType` (`Single` | `Subscription`), `BillingInterval` (`Monthly` | `Yearly`),
   `Currency` (`USD` | `EUR` | `GBP`) + `CURRENCY_SYMBOL` map.
 - **hooks/** — `useRealtimeProducts`.
-- **utils/** — removed. `formatDate` and the image validation/dimension helpers moved to the shared
-  `@common/service/*` singletons (`formattingService` in `formatting.service.ts`, `imageService` in `image.service.ts`).
+- There is no `utils/` folder: `formatPrice` lives on `productFormatService` (barrel-exported, used by
+  `priceColumn` and `CatalogProducts`); the old `formatDate` and image validation/dimension helpers live in
+  the shared `@common/service/*` singletons (`formattingService`, `imageService`).
 
 `DashboardPage` and `CatalogPage` are server components that call `getProductService.fetchProducts()` and
 render the table / grid respectively.
@@ -518,7 +541,8 @@ render the table / grid respectively.
 Sidebar items are declared per feature as `INavItem[]` (`@common/types`) in each module's
 `navigation/` folder (`catalogNavItems`, `dashboardNavItems`). The `Navbar`
 (`@common/components/Navbar`, with `NavbarHeader` + `NavbarMenu` subcomponents) composes them via
-`filterNavItemsByAccess(user?.role)`, which hides items whose `access` the current role fails.
+`navigationService.filterNavItemsByAccess(user?.role)` (`@common/service/navigation.service`), which hides
+items whose `access` the current role fails (checked through `accessService.canAccess`).
 
 ---
 
@@ -601,30 +625,15 @@ installed; prettier defaults are 2-space and would churn this 4-space codebase �
 
 Fix these when you touch the relevant file; don't replicate the patterns.
 
-1. **`BaseDao.findAll` ignores pagination** — it accepts `IGetPaginatedData` (`page`, `pageSize`)
-   but only applies `.order()`, never `.range()`. `getProductService.fetchProducts` passes `pageSize: 100`
-   with no effect; all rows are returned. Implement `.range()` if real pagination is needed.
-
-2. **Typo in `CookieKey` filename** — the file is `CookieyKey.ts` (extra `y`); the enum inside is correctly
-   named `CookieKey`. Import from `@common/enums/CookieyKey` until renamed. (The cookie-based access-token
-   flow it was built for is largely unused.)
-
-3. **Duplicate enums** — `AccessType` and `UserRole` are identical (`'Admin' | 'User'`).
-   `validateUserAccess` casts a `UserRole` to `AccessType` (`as unknown as AccessType`). Consider collapsing
-   to one.
-
-4. **`SignUpForm` uses soft `router.push` after sign-up** — fine when sign-up returns no session (redirect
+1. **`SignUpForm` uses soft `router.push` after sign-up** — fine when sign-up returns no session (redirect
    to `/login`), but if email confirmation is disabled and a session is returned, `router.push('/catalog')`
    hits the stale-`UserContext` problem described in Auth Layer 3. Prefer a hard navigation when a session
    exists.
 
-5. **Dead `@utils/*` alias** — the `@utils/*` alias resolves to a deleted directory (`utils/` is gone; the
-   now-`src/core/utils` folder was also removed). `src/modules/common/index.ts` no longer exists either —
-   `common` is imported by full path (see Module structure).
-
-6. **Unadopted abstractions** — `FormInput` (`@common/components`) and `useModal` (`@common/hooks`) have no
-   consumers, and `user.service.ts` bypasses the DAO layer (queries Supabase directly; the user module has no
-   DAO). Adopt these patterns where live code hand-rolls the same thing — don't add parallel implementations.
+2. **Dead `@utils/*` alias** — the `@utils/*` alias resolves to a deleted directory (the top-level `utils/`
+   is gone, and module `utils/` folders were retired too — pure helpers live as methods on module services).
+   `src/modules/common/index.ts` no longer exists either — `common` is imported by full path (see Module
+   structure).
 
 ---
 
@@ -655,7 +664,6 @@ You are my advisor, not my assistant. Your job is accuracy, not agreement. Follo
 - Locale switching UI/catalog (the cookie-based negotiation now exists — `locale.service.ts`
   `getLocale`/`changeLocale` + `resolveLocale`, consumed by `request.ts` — but there is still only the `en`
   catalog and one `Locale`, no URL locale routing, and no language-switcher component calling `changeLocale`).
-- Pagination in `BaseDao.findAll` (params accepted, `.range()` not applied).
 - Global state management beyond `UserContext` (no Redux/Zustand).
 - `@static` target and a `utils/` directory for `@utils/*` (aliases reserved/dangling, directories absent).
 - Tests (no jest setup or specs; jest/strict-null-checks ESLint rules deliberately not migrated).

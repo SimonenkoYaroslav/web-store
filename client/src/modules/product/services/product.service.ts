@@ -1,11 +1,3 @@
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
-
-import { createClient } from '@core/clients/supabase/client';
-import {
-    archiveStripeSubscription,
-    deprovisionStripeSubscription,
-    syncStripeSubscription,
-} from '@modules/product/actions/stripeSubscription';
 import productDao from '@modules/product/dao/client'
 import { ProductType } from '@modules/product/enums/ProductType';
 import { ICreateProduct, IEditProduct, IProduct } from '@modules/product/types';
@@ -28,11 +20,8 @@ class ProductService {
 
             const product = await this.updateProduct({ productId: createdProduct.id, data: { imageUrl: publicUrl } });
 
-            if (product.type !== ProductType.Subscription) {
-                return product;
-            }
+            return product;
 
-            return await syncStripeSubscription(product.id);
         } catch (error) {
             await this.rollbackCreate(createdProduct.id, imagePath);
             throw error;
@@ -55,14 +44,6 @@ class ProductService {
             productId,
             data: { name: data.name, type: data.type, amount: data.amount, currency: data.currency, imageUrl },
         });
-
-        if (updated.type === ProductType.Subscription) {
-            return syncStripeSubscription(productId);
-        }
-
-        if (existing.type === ProductType.Subscription) {
-            return deprovisionStripeSubscription(productId);
-        }
 
         return updated;
     }
@@ -92,7 +73,6 @@ class ProductService {
         const product = await productDao.findById(productId);
 
         if (product.stripe_product_id) {
-            await archiveStripeSubscription(product.stripe_product_id);
         }
 
         if (product.image_url) {
@@ -123,21 +103,6 @@ class ProductService {
         }
 
         await productDao.delete(productId).catch(() => undefined);
-    }
-
-    subscribeToChanges(
-        onChange: (payload: RealtimePostgresChangesPayload<IProduct>) => void,
-    ): () => void {
-        const supabase = createClient();
-
-        const channel = supabase
-            .channel('public:products')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, onChange)
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
     }
 }
 

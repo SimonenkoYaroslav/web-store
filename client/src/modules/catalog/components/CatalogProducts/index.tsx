@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { FC } from 'react';
 
-import { useRealtimeProducts, ProductType } from '@modules/product';
+import { EmptyState } from '@common/components';
+import { useRealtimeProducts, ProductType, productFormatService } from '@modules/product';
 import { IProduct } from '@modules/product/types';
 
 interface IProps {
@@ -16,11 +17,7 @@ export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
     const products = useRealtimeProducts(initialProducts);
 
     if (products.length === 0) {
-        return (
-            <div className="glass-panel mt-8 py-12 text-center uppercase tracking-wider text-brand-600">
-                {t('noProducts')}
-            </div>
-        );
+        return <EmptyState message={t('noProducts')} className="mt-8" />;
     }
 
     return (
@@ -50,7 +47,7 @@ export const CatalogProducts: FC<IProps> = ({ initialProducts }) => {
                                 : product.type}
                         </p>
                         <p className="mt-auto font-mono text-xl font-semibold text-brand-900">
-                            {product.amount} {product.currency}
+                            {productFormatService.formatPrice(product.amount, product.currency)}
                         </p>
                     </div>
                 </li>

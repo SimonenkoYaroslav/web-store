@@ -1,10 +1,10 @@
 import { PropsWithChildren } from 'react'
 
-import { AccessType } from '@modules/auth/enums/AccessType'
 import { MainLayout } from '@modules/common/layouts/MainLayout'
+import { UserRole } from '@modules/user/enums/UserRole'
 
 export default async function DashboardLayout({ children }: PropsWithChildren) {
     return (
-        <MainLayout access={AccessType.ADMIN}>{children}</ MainLayout >
+        <MainLayout access={UserRole.ADMIN}>{children}</ MainLayout >
     )
 }

@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 
-import { CookieKey } from '@common/enums/CookieyKey';
+import { CookieKey } from '@common/enums/CookieKey';
 
 import { Locale, resolveLocale } from './locales';
 

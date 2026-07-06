@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl';
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 
 import { DataTable } from '@modules/common/components';
 import { DeleteProductModal } from '@modules/product/components/DeleteProductModal';
@@ -20,10 +20,10 @@ export const ProductsTable: FC<IProps> = ({ initialProducts }) => {
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
     const [deletingProduct, setDeletingProduct] = useState<IProduct | null>(null);
 
-    const columns = getProductColumns(t, {
-        onEdit: setEditingProduct,
-        onDelete: setDeletingProduct,
-    });
+    const columns = useMemo(
+        () => getProductColumns(t, { onEdit: setEditingProduct, onDelete: setDeletingProduct }),
+        [t],
+    );
 
     return (
         <>

@@ -3,14 +3,13 @@
 import { redirect } from "next/navigation";
 import { FC } from "react"
 
-import { AccessType } from "@modules/auth/enums/AccessType";
-import normalizeAllowedAccess from "@modules/auth/utils/normalizeAllowedAccess";
-import validateUserAccess from "@modules/auth/utils/validateUserAccess";
+import { accessService } from "@modules/auth/services";
 import { useUser } from "@modules/user";
+import { UserRole } from "@modules/user/enums/UserRole";
 
 interface IProps {
     children: React.ReactNode
-    access?: AccessType | AccessType[];
+    access?: UserRole | UserRole[];
 }
 
 export const AuthGuard: FC<IProps> = ({ children, access }) => {
@@ -20,8 +19,7 @@ export const AuthGuard: FC<IProps> = ({ children, access }) => {
         redirect('/login');
     }
 
-    const allowedAccess = normalizeAllowedAccess(access);
-    const hasAccess = validateUserAccess(user.role, allowedAccess);
+    const hasAccess = accessService.canAccess(user.role, access);
 
     if (!hasAccess) {
         redirect('/forbidden');

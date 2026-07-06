@@ -9,6 +9,10 @@ class FormattingService {
         return `${day}.${month}.${year}`;
     };
 
+    formatPrice(amount: number, currency: string): string {
+        return ''
+    }
+
 }
 
 export default new FormattingService;

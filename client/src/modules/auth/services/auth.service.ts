@@ -22,8 +22,6 @@ class AuthService {
             email,
             password,
             options: {
-                // Stored on auth.users.user_metadata — LogInForm reads `role` from here to
-                // decide the post-login redirect. New accounts default to the USER role.
                 data: {
                     firstName,
                     lastName,
@@ -46,5 +44,4 @@ class AuthService {
     }
 }
 
-const authService = new AuthService;
-export default authService;
+export default new AuthService;

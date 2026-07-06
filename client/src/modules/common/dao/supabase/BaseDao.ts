@@ -9,7 +9,7 @@ export type { SupabaseClientFactory };
 export abstract class BaseDao<Entity> {
     protected abstract readonly table: string;
 
-    constructor(protected readonly getClient: SupabaseClientFactory) {}
+    constructor(protected readonly getClient: SupabaseClientFactory) { }
 
     protected unwrap<T>(response: PostgrestSingleResponse<T>): T {
         if (response.error) {
@@ -36,9 +36,7 @@ export abstract class BaseDao<Entity> {
     async update(params: Partial<Entity>, id: string): Promise<Entity> {
         const client = await this.getClient();
 
-        // postgrest-js's excess-property check can't be proven for an unresolved
-        // generic, so the payload is cast on this single Supabase-facing line;
-        // callers are still held to Partial<Entity> (real column names) above.
+
         return this.unwrap(
             await client.from(this.table).update(params as never).eq('id', id).select<'*', Entity>('*').single(),
         );

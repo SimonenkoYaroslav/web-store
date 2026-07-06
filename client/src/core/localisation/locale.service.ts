@@ -2,19 +2,38 @@ import { cookies } from 'next/headers';
 
 import { CookieKey } from '@common/enums/CookieKey';
 
-import { Locale, resolveLocale } from './locales';
+import { DEFAULT_LOCALE, ENABLED_LOCALES, Locale } from './locales';
 
-export const getLocale = async (): Promise<Locale> => {
-    const cookieStore = await cookies();
+class LocalizationService {
+    getLocale = async (): Promise<Locale> => {
+        const cookieStore = await cookies();
 
-    return resolveLocale(cookieStore.get(CookieKey.LOCALE)?.value);
-};
+        return this.resolveLocale(cookieStore.get(CookieKey.LOCALE)?.value);
+    }
 
-export const changeLocale = async (requested: string): Promise<Locale> => {
-    const locale = resolveLocale(requested);
-    const cookieStore = await cookies();
+    async changeLocale(requested: string): Promise<Locale> {
+        const locale = this.resolveLocale(requested);
+        const cookieStore = await cookies();
 
-    cookieStore.set(CookieKey.LOCALE, locale, { path: '/', sameSite: 'lax' });
+        cookieStore.set(CookieKey.LOCALE, locale, { path: '/', sameSite: 'lax' });
 
-    return locale;
-};
+        return locale;
+    }
+
+    getEnabled<Values extends string>(config: Record<Values, boolean>): Values[] {
+        return Object.entries(config)
+            .filter(([, enabled]) => enabled)
+            .map(([value]) => value as Values);
+    }
+
+    private isEnabledLocale(value: string | undefined | null): boolean {
+        return ENABLED_LOCALES.includes(value as Locale);
+    }
+
+    private resolveLocale(requested: string | undefined | null): Locale {
+        return this.isEnabledLocale(requested) ? requested as Locale : DEFAULT_LOCALE;
+    }
+
+}
+
+export default new LocalizationService;

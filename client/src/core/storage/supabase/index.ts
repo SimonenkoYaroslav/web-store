@@ -1,10 +1,6 @@
 import { SupabaseClientFactory } from '@core/clients/supabase/types';
 
-/**
- * Context-neutral storage base — mirrors BaseDao's constructor injection: the
- * consuming service supplies the Supabase client factory matching its
- * execution context, so this core layer never imports a concrete client.
- */
+
 export abstract class StorageService {
     protected abstract readonly bucketId: string;
 

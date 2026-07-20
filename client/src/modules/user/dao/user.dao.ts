@@ -1,6 +1,8 @@
 import { BaseDao } from '@modules/common/dao/supabase/BaseDao';
 import { IUser } from '@user/types/user';
 
-export class UserDao extends BaseDao<IUser> {
+class UserDao extends BaseDao<IUser> {
     protected readonly table = 'users';
 }
+
+export default new UserDao();

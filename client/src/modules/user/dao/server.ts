@@ -1,5 +1,4 @@
-import { createClient } from '@core/clients/supabase/server';
-
-import { UserDao } from './user.dao';
-
-export default new UserDao(createClient);
+// Obsolete: DAO methods now take the Supabase client per call, so the DAO is
+// context-neutral and this pre-bound server singleton is no longer needed.
+// Import the singleton from '@modules/user/dao/user.dao' instead. Safe to delete.
+export {};

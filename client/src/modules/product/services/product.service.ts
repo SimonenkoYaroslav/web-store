@@ -1,4 +1,5 @@
-import productDao from '@modules/product/dao/client'
+import { createClient } from '@core/clients/supabase/client';
+import productDao from '@modules/product/dao/product.dao';
 import { ProductType } from '@modules/product/enums/ProductType';
 import { ICreateProduct, IEditProduct, IProduct } from '@modules/product/types';
 import { IUpdateProductInput } from '@modules/product/types/updateProduct';
@@ -7,10 +8,11 @@ import productImageService from './product-image.service';
 
 class ProductService {
     async createProduct(data: ICreateProduct): Promise<IProduct> {
+        const supabase = createClient();
         const { image, ...productData } = data;
         const [file] = image;
 
-        const createdProduct = await productDao.insert(productData);
+        const createdProduct = await productDao.insert(supabase, productData);
 
         let imagePath: string | undefined;
 
@@ -29,7 +31,8 @@ class ProductService {
     }
 
     async editProduct(productId: string, data: IEditProduct, hasNewImage: boolean): Promise<IProduct> {
-        const existing = await productDao.findById(productId);
+        const supabase = createClient();
+        const existing = await productDao.findById(supabase, productId);
 
         if (existing.type === ProductType.Single && data.type === ProductType.Subscription) {
             throw new Error(
@@ -49,15 +52,16 @@ class ProductService {
     }
 
     async updateProduct(params: IUpdateProductInput): Promise<IProduct> {
+        const supabase = createClient();
         const { data, productId } = params;
         const { imageUrl, ...rest } = data;
 
         if (imageUrl === undefined) {
-            return productDao.update(rest, productId);
+            return productDao.update(supabase, rest, productId);
         }
 
-        const previousImageUrl = (await productDao.findById(productId)).image_url;
-        const updated = await productDao.update({ ...rest, image_url: imageUrl }, productId);
+        const previousImageUrl = (await productDao.findById(supabase, productId)).image_url;
+        const updated = await productDao.update(supabase, { ...rest, image_url: imageUrl }, productId);
 
         // The old file is removed only after the row points at the new one, so a
         // failed update never leaves the product referencing a deleted file; the
@@ -70,7 +74,8 @@ class ProductService {
     }
 
     async deleteProduct(productId: string): Promise<void> {
-        const product = await productDao.findById(productId);
+        const supabase = createClient();
+        const product = await productDao.findById(supabase, productId);
 
         if (product.stripe_product_id) {
         }
@@ -79,7 +84,7 @@ class ProductService {
             await productImageService.deleteImageByUrl(product.image_url);
         }
 
-        await productDao.delete(productId);
+        await productDao.delete(supabase, productId);
     }
 
     private async uploadReplacementImage(
@@ -98,11 +103,13 @@ class ProductService {
     }
 
     private async rollbackCreate(productId: string, imagePath?: string): Promise<void> {
+        const supabase = createClient();
+
         if (imagePath) {
             await productImageService.deleteImageByPath(imagePath).catch(() => undefined);
         }
 
-        await productDao.delete(productId).catch(() => undefined);
+        await productDao.delete(supabase, productId).catch(() => undefined);
     }
 }
 

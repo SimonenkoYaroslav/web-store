@@ -1,4 +1,5 @@
-import productDao from '@modules/product/dao/server';
+import { createClient } from '@core/clients/supabase/server';
+import productDao from '@modules/product/dao/product.dao';
 import { ProductType } from '@modules/product/enums/ProductType';
 import stripeProductService from '@modules/product/services/stripe-product.server.service';
 import { IProduct } from '@modules/product/types';
@@ -9,7 +10,8 @@ class StripeSubscriptionService {
     async syncSubscription(productId: string): Promise<IProduct> {
         await this.assertAdmin();
 
-        const product = await productDao.findById(productId);
+        const client = await createClient();
+        const product = await productDao.findById(client, productId);
 
         if (product.type !== ProductType.Subscription) {
             return product;
@@ -22,9 +24,12 @@ class StripeSubscriptionService {
         }
 
         if (!stripe_product_id || !stripe_price_id) {
-            const references = await stripeProductService.createSubscriptionProduct({ name, amount, currency, interval });
+            const references = await stripeProductService.createSubscriptionProduct(
+                { name, amount, currency, interval },
+            );
 
             return productDao.update(
+                client,
                 { stripe_product_id: references.stripeProductId, stripe_price_id: references.stripePriceId },
                 productId,
             );
@@ -41,7 +46,7 @@ class StripeSubscriptionService {
         });
 
         if (syncedPriceId !== stripe_price_id) {
-            return productDao.update({ stripe_price_id: syncedPriceId }, productId);
+            return productDao.update(client, { stripe_price_id: syncedPriceId }, productId);
         }
 
         return product;
@@ -53,13 +58,15 @@ class StripeSubscriptionService {
     async deprovisionSubscription(productId: string): Promise<IProduct> {
         await this.assertAdmin();
 
-        const product = await productDao.findById(productId);
+        const client = await createClient();
+        const product = await productDao.findById(client, productId);
 
         if (product.stripe_product_id) {
             await stripeProductService.archiveSubscriptionProduct(product.stripe_product_id);
         }
 
         return productDao.update(
+            client,
             { stripe_product_id: null, stripe_price_id: null, interval: null },
             productId,
         );
